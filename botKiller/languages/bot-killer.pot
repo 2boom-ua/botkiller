@@ -1,0 +1,715 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Bot Killer 2.7\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2024-01-01 12:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"X-Generator: \n"
+
+#: includes/class-botkiller.php:76
+msgid "Auto-whitelisted server IP"
+msgstr ""
+
+#: includes/class-botkiller.php:216
+msgid "Unauthorized"
+msgstr ""
+
+#: includes/class-botkiller.php:217
+msgid "Cloudflare IPs updated successfully"
+msgstr ""
+
+#: includes/class-botkiller.php:537
+msgid "LOG ROTATED"
+msgstr ""
+
+#: includes/class-botkiller.php:537
+msgid "previous log"
+msgstr ""
+
+#: includes/class-botkiller.php:553
+msgid "BOT KILLER LOG STARTED"
+msgstr ""
+
+#: includes/class-botkiller.php:554
+msgid "Add IP ranges to block (one per line)"
+msgstr ""
+
+#: includes/class-botkiller.php:554 includes/class-botkiller.php:555
+msgid "Examples"
+msgstr ""
+
+#: includes/class-botkiller.php:555
+msgid "Add IP ranges to whitelist (one per line)"
+msgstr ""
+
+#: includes/class-botkiller.php:556
+msgid "Note: Whitelist bypasses all blocking rules"
+msgstr ""
+
+#: includes/class-botkiller.php:580
+msgid "invalid"
+msgstr ""
+
+#: includes/class-botkiller.php:582
+msgid "Price"
+msgstr ""
+
+#: includes/class-botkiller.php:604
+msgid "auto-unblock in %s hours"
+msgstr ""
+
+#: includes/class-botkiller.php:611 includes/class-botkiller.php:681
+#: includes/class-botkiller.php:1609
+msgid "unknown"
+msgstr ""
+
+#: includes/class-botkiller.php:621 includes/class-botkiller.php:764
+#: includes/class-botkiller.php:774
+msgid "Access Denied - IP Blocked"
+msgstr ""
+
+#: includes/class-botkiller.php:624
+msgid "Access Denied - Your IP has been blocked due to suspicious activity."
+msgstr ""
+
+#: includes/class-botkiller.php:624 includes/class-botkiller.php:656
+msgid "Blocked"
+msgstr ""
+
+#: includes/class-botkiller.php:633
+msgid "JavaScript is required for this site."
+msgstr ""
+
+#: includes/class-botkiller.php:633
+msgid "Continue without JavaScript (not recommended)"
+msgstr ""
+
+#: includes/class-botkiller.php:644
+msgid "No JavaScript detected - bot behavior"
+msgstr ""
+
+#: includes/class-botkiller.php:645
+msgid "Access Denied - JavaScript is required to access this site."
+msgstr ""
+
+#: includes/class-botkiller.php:655
+msgid "Rate limit exceeded"
+msgstr ""
+
+#: includes/class-botkiller.php:751
+msgid "Purchases are only available from selected countries"
+msgstr ""
+
+#: includes/class-botkiller.php:757
+msgid "Unable to verify your location"
+msgstr ""
+
+#: includes/class-botkiller.php:833 includes/class-botkiller.php:842
+#: includes/class-botkiller.php:858
+msgid "Access Denied - Too many attempts"
+msgstr ""
+
+#: includes/class-botkiller.php:892
+msgid "auto-unblocked after"
+msgstr ""
+
+#: includes/class-botkiller.php:892 includes/views/admin-dashboard.php:386
+#: includes/views/admin-settings.php:468 includes/views/admin-settings.php:480
+msgid "hours"
+msgstr ""
+
+#: includes/class-botkiller.php:951
+msgid "Rule attempts should be at least 2 to avoid false positives."
+msgstr ""
+
+#: includes/class-botkiller.php:956
+msgid "Rule attempts should not exceed 100."
+msgstr ""
+
+#: includes/class-botkiller.php:967
+msgid "Rule seconds should be at least 5 to avoid false positives."
+msgstr ""
+
+#: includes/class-botkiller.php:972
+msgid "Rule seconds should not exceed 86400 (24 hours)."
+msgstr ""
+
+#: includes/class-botkiller.php:1001
+msgid "Bot Killer: Could not fetch search engine IP ranges. Using fallback lists which may be outdated."
+msgstr ""
+
+#: includes/class-botkiller.php:1004
+msgid "Bot Killer: Could not fetch Cloudflare IP ranges. Proxy detection may not work correctly."
+msgstr ""
+
+#: includes/class-botkiller.php:1007
+msgid "Bot Killer: Upload directory is not writable. Please check permissions."
+msgstr ""
+
+#: includes/class-botkiller.php:1009
+msgid "Bot Killer: IP addresses are logged for security purposes. External API calls are made to ip-api.com (GeoIP) and Cloudflare (IP ranges)."
+msgstr ""
+
+#: includes/class-botkiller.php:1015
+msgid "Bot Killer"
+msgstr ""
+
+#: includes/class-botkiller.php:1022
+msgid "Settings"
+msgstr ""
+
+#: includes/class-botkiller.php:1028
+msgid "You do not have sufficient permissions to access this page."
+msgstr ""
+
+#: includes/class-botkiller.php:1174
+msgid "Settings saved successfully!"
+msgstr ""
+
+#: includes/class-botkiller.php:1311
+msgid "manually unblocked by admin"
+msgstr ""
+
+#: includes/class-botkiller.php:1313
+msgid "ip %s unblocked!"
+msgstr ""
+
+#: includes/class-botkiller.php:1322
+msgid "all auto-blocked ips manually cleared by admin"
+msgstr ""
+
+#: includes/class-botkiller.php:1324
+msgid "all auto-blocked ips unblocked!"
+msgstr ""
+
+#: includes/class-botkiller.php:1329
+msgid "LOG CLEARED"
+msgstr ""
+
+#: includes/class-botkiller.php:1332
+msgid "log cleared!"
+msgstr ""
+
+#: includes/class-botkiller.php:1380
+msgid "No log yet"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:5
+msgid "Bot Killer Dashboard"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:10
+msgid "Search Engine IPs:"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:16
+msgid "Google (%d), Bing (%d)"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:18 includes/views/admin-dashboard.php:26
+#: includes/views/admin-settings.php:19 includes/views/admin-settings.php:27
+msgid "Not loaded"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:22
+msgid "Cloudflare IPs:"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:24
+msgid "Loaded (%d IPv4, %d IPv6)"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:29
+msgid "Allowed Countries:"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:30
+msgid "All countries"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:186
+msgid "Auto Blocked"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:188
+msgid "Temporarily blocked IPs"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:194
+msgid "Custom Blocked"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:196
+msgid "Permanently blocked IPs"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:202
+msgid "Whitelisted"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:204
+msgid "Always allowed IPs"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:210
+msgid "Your IP"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:212
+msgid "Current visitor"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:218
+msgid "Status"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:220 includes/views/admin-dashboard.php:221
+msgid "Active"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:222
+msgid "Protection enabled"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:228
+msgid "Timezone"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:230
+msgid "Log timestamps"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:242
+msgid "Auto-blocked IPs"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:244
+msgid "Refresh"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:248
+msgid "Remove all auto-blocks?"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:249
+msgid "Unblock All"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:261
+msgid "IP Address"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:262
+msgid "Location"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:264
+msgid "Unblocks In"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:265
+msgid "Action"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:284
+msgid "expired"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:287
+msgid "permanent"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:291
+msgid "Unblock"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:298
+msgid "No auto-blocked IPs yet"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:306
+msgid "Active Rules"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:307
+msgid "Configure"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:315 includes/views/admin-settings.php:207
+msgid "Rule 1: Rapid Attempts"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:316 includes/views/admin-dashboard.php:325
+msgid "%d adds in %ds"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:319 includes/views/admin-dashboard.php:328
+#: includes/views/admin-dashboard.php:337 includes/views/admin-dashboard.php:346
+#: includes/views/admin-dashboard.php:355 includes/views/admin-dashboard.php:364
+msgid "Enabled"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:320 includes/views/admin-dashboard.php:329
+#: includes/views/admin-dashboard.php:338 includes/views/admin-dashboard.php:347
+#: includes/views/admin-dashboard.php:356 includes/views/admin-dashboard.php:365
+msgid "Disabled"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:324 includes/views/admin-settings.php:232
+msgid "Rule 2: Multiple Attempts"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:333 includes/views/admin-settings.php:253
+msgid "Rule 3: Different Products"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:334
+msgid "%d products in %ds"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:342
+msgid "Custom Rules"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:343
+msgid "User-defined blocking rules"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:351 includes/views/admin-settings.php:299
+msgid "No JavaScript Blocking"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:352 includes/views/admin-settings.php:302
+msgid "Block visitors without JS"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:360 includes/views/admin-settings.php:313
+msgid "Out of Stock Blocker"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:361 includes/views/admin-settings.php:316
+msgid "Block out-of-stock attempts"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:373
+msgid "Priority Order:"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:374 includes/views/admin-settings.php:186
+msgid "Whitelist"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:375
+msgid "Search Engines"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:376
+msgid "Country Filter"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:377 includes/views/admin-settings.php:172
+msgid "Blocklist"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:378
+msgid "No-JS Block"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:379
+msgid "Auto-blocked"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:380
+msgid "Rules (1-4)"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:386
+msgid "Auto-unblock:"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:386
+msgid "%s hours"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:387
+msgid "Timezone:"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:399
+msgid "Live Log"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:401
+msgid "Refresh Log"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:403
+msgid "Clear Log"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:469
+msgid "No log entries yet"
+msgstr ""
+
+#: includes/views/admin-dashboard.php:477
+msgid "timestamps in GMT%s | total displayed: %d | Geo data: [country code - city]"
+msgstr ""
+
+#: includes/views/admin-settings.php:5
+msgid "Bot Killer Settings"
+msgstr ""
+
+#: includes/views/admin-settings.php:13
+msgid "Google (%d ranges), Bing (%d ranges)"
+msgstr ""
+
+#: includes/views/admin-settings.php:30
+msgid "Active Rules:"
+msgstr ""
+
+#: includes/views/admin-settings.php:40
+msgid "%d rules active"
+msgstr ""
+
+#: includes/views/admin-settings.php:166
+msgid "IP Lists"
+msgstr ""
+
+#: includes/views/admin-settings.php:174 includes/views/admin-settings.php:190
+msgid "active"
+msgstr ""
+
+#: includes/views/admin-settings.php:176
+msgid "IPs/ranges that will be blocked immediately"
+msgstr ""
+
+#: includes/views/admin-settings.php:178 includes/views/admin-settings.php:194
+msgid "Format:"
+msgstr ""
+
+#: includes/views/admin-settings.php:192
+msgid "IPs/ranges that bypass all blocking rules"
+msgstr ""
+
+#: includes/views/admin-settings.php:194
+msgid "single IP, CIDR (IPv4/IPv6), range (IPv4 only), # for comments"
+msgstr ""
+
+#: includes/views/admin-settings.php:210
+msgid "Enable Rule"
+msgstr ""
+
+#: includes/views/admin-settings.php:215
+msgid "Block after"
+msgstr ""
+
+#: includes/views/admin-settings.php:218 includes/views/admin-settings.php:238
+#: includes/views/admin-settings.php:259
+msgid "attempts in"
+msgstr ""
+
+#: includes/views/admin-settings.php:220 includes/views/admin-settings.php:240
+#: includes/views/admin-settings.php:261
+msgid "seconds"
+msgstr ""
+
+#: includes/views/admin-settings.php:223
+msgid "Default: 2 attempts in 10 seconds. Blocks rapid same-product additions."
+msgstr ""
+
+#: includes/views/admin-settings.php:245
+msgid "Default: 3 attempts in 300 seconds. Blocks repeated same-product additions."
+msgstr ""
+
+#: includes/views/admin-settings.php:264
+msgid "different products in"
+msgstr ""
+
+#: includes/views/admin-settings.php:268
+msgid "Catches inventory scraping bots adding many different items quickly."
+msgstr ""
+
+#: includes/views/admin-settings.php:276
+msgid "Rule 4: Custom Rules"
+msgstr ""
+
+#: includes/views/admin-settings.php:279
+msgid "Enable Custom Rules"
+msgstr ""
+
+#: includes/views/admin-settings.php:285
+msgid "attempts,seconds (one per line)"
+msgstr ""
+
+#: includes/views/admin-settings.php:286
+msgid "Examples:"
+msgstr ""
+
+#: includes/views/admin-settings.php:286
+msgid "5,3600 (5 attempts in 1 hour), 10,120 (10 attempts in 2 minutes)"
+msgstr ""
+
+#: includes/views/admin-settings.php:305
+msgid "Many bots don't execute JavaScript. Enabling this will block them."
+msgstr ""
+
+#: includes/views/admin-settings.php:319
+msgid "Blocks visitors who try to add out-of-stock products. Helps prevent inventory checking bots."
+msgstr ""
+
+#: includes/views/admin-settings.php:320
+msgid "Warning:"
+msgstr ""
+
+#: includes/views/admin-settings.php:320
+msgid "May block legitimate customers."
+msgstr ""
+
+#: includes/views/admin-settings.php:329
+msgid "Country Blocking"
+msgstr ""
+
+#: includes/views/admin-settings.php:332
+msgid "Allow add-to-cart only from:"
+msgstr ""
+
+#: includes/views/admin-settings.php:399
+msgid "Hold Ctrl/Cmd to select multiple. Leave empty to disable."
+msgstr ""
+
+#: includes/views/admin-settings.php:407
+msgid "Block unknown countries"
+msgstr ""
+
+#: includes/views/admin-settings.php:409
+msgid "When geolocation fails to detect country, block the request."
+msgstr ""
+
+#: includes/views/admin-settings.php:418
+msgid "GeoIP Configuration"
+msgstr ""
+
+#: includes/views/admin-settings.php:422
+msgid "Primary Service:"
+msgstr ""
+
+#: includes/views/admin-settings.php:430
+msgid "Cache Duration:"
+msgstr ""
+
+#: includes/views/admin-settings.php:433
+msgid "1 hour"
+msgstr ""
+
+#: includes/views/admin-settings.php:434
+msgid "6 hours"
+msgstr ""
+
+#: includes/views/admin-settings.php:435
+msgid "12 hours"
+msgstr ""
+
+#: includes/views/admin-settings.php:436
+msgid "24 hours"
+msgstr ""
+
+#: includes/views/admin-settings.php:437
+msgid "48 hours"
+msgstr ""
+
+#: includes/views/admin-settings.php:438
+msgid "72 hours"
+msgstr ""
+
+#: includes/views/admin-settings.php:439
+msgid "1 week"
+msgstr ""
+
+#: includes/views/admin-settings.php:446
+msgid "Enable fallback"
+msgstr ""
+
+#: includes/views/admin-settings.php:450
+msgid "Disable GeoIP"
+msgstr ""
+
+#: includes/views/admin-settings.php:462
+msgid "Auto-unblock Settings"
+msgstr ""
+
+#: includes/views/admin-settings.php:465
+msgid "Unblock after"
+msgstr ""
+
+#: includes/views/admin-settings.php:470
+msgid "Auto-blocked IPs are automatically unblocked after this time."
+msgstr ""
+
+#: includes/views/admin-settings.php:476
+msgid "Log Settings"
+msgstr ""
+
+#: includes/views/admin-settings.php:479
+msgid "Max log size"
+msgstr ""
+
+#: includes/views/admin-settings.php:483
+msgid "Logs include geographic location when GeoIP is enabled."
+msgstr ""
+
+#: includes/views/admin-settings.php:492
+msgid "Select timezone"
+msgstr ""
+
+#: includes/views/admin-settings.php:511
+msgid "Update Cloudflare IPs Now"
+msgstr ""
+
+#: includes/views/admin-settings.php:514
+msgid "Return to Dashboard"
+msgstr ""
+
+#: includes/views/admin-settings.php:515
+msgid "Save All Settings"
+msgstr ""
+
+#: includes/views/admin-settings.php:523
+msgid "Update Cloudflare IP ranges now? This may take a few seconds."
+msgstr ""
+
+#: includes/views/admin-settings.php:528
+msgid "Updating..."
+msgstr ""
+
+#: includes/views/admin-settings.php:541
+msgid "Cloudflare IPs updated successfully!"
+msgstr ""
+
+#: includes/views/admin-settings.php:544
+msgid "Failed to update Cloudflare IPs"
+msgstr ""
+
+#: includes/views/admin-settings.php:548
+msgid "Error updating Cloudflare IPs"
+msgstr ""
+
+#: botkiller.php:17
+msgid "Advanced bot protection for WooCommerce"
+msgstr ""
+
+#: botkiller.php:37
+msgid "Bot Killer requires WooCommerce to be installed and activated."
+msgstr ""
+
+msgid "Fallback tries other services if primary fails."
+msgstr ""
+
+msgid "Save IP Lists"
+msgstr ""
