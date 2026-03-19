@@ -553,7 +553,7 @@ a.bot-killer-btn.bot-killer-btn:active {
                             $tor_timeout = get_option('_transient_timeout_bot_killer_tor_nodes', 0);
                             
                             if ($tor_ips !== false && $tor_timeout > time()) {
-                                $update_time = $tor_timeout - (12 * HOUR_IN_SECONDS); // 12 годин
+                                $update_time = $tor_timeout - (12 * HOUR_IN_SECONDS); // 12 hours
                                 echo human_time_diff($update_time, time()) . ' ' . __('ago', 'bot-killer');
                             } else {
                                 _e('Never', 'bot-killer');
