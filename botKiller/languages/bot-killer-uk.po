@@ -1,722 +1,914 @@
-# Translation of Bot Killer in Ukrainian
-# Copyright (C) 2024
-# This file is distributed under the same license as the bot-killer package.
+# Bot Killer Ukrainian translation
+# Copyright (C) 2026
+# This file is distributed under the same license as the Bot Killer plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: bot-killer 2.7\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-01 12:00+0000\n"
-"PO-Revision-Date: 2026-02-28 21:31+0200\n"
+"Project-Id-Version: Bot Killer\n"
+"POT-Creation-Date: 2026-03-19 12:00+0200\n"
+"PO-Revision-Date: 2026-03-19 12:00+0200\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
-"Language: uk_UA\n"
+"Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 3.8\n"
 
-#: includes/class-botkiller.php:76
+#: class-botkiller.php:119
 msgid "Auto-whitelisted server IP"
-msgstr "Автоматично додана IP-адреса сервера до білого списку"
+msgstr "Авто-білий IP сервера"
 
-#: includes/class-botkiller.php:216
-msgid "Unauthorized"
-msgstr "Не авторизовано"
+#: class-botkiller.php:181
+msgid "Using fallback Cloudflare IPs - fetch failed"
+msgstr "Резервні Cloudflare IP - помилка"
 
-#: includes/class-botkiller.php:217
-msgid "Cloudflare IPs updated successfully"
-msgstr "Cloudflare IP-адреси успішно оновлено"
+#: class-botkiller.php:193
+msgid "Cloudflare IPs manually updated: %d IPv4, %d IPv6 ranges"
+msgstr "Cloudflare IP оновлено: %d IPv4, %d IPv6"
 
-#: includes/class-botkiller.php:537
-msgid "LOG ROTATED"
-msgstr "ЛОГ РОТОВАНО"
+#: class-botkiller.php:196
+msgid "Cloudflare IPs updated via cron: %d IPv4, %d IPv6 ranges"
+msgstr "Cloudflare IP (cron): %d IPv4, %d IPv6"
 
-#: includes/class-botkiller.php:537
-msgid "previous log"
-msgstr "попередній лог"
+#: class-botkiller.php:218 class-botkiller.php:239 class-botkiller.php:260
+msgid "Invalid security token. Please refresh the page and try again."
+msgstr "Помилка безпеки. Оновіть сторінку."
 
-#: includes/class-botkiller.php:553
-msgid "BOT KILLER LOG STARTED"
-msgstr "ЛОГ BOT KILLER РОЗПОЧАТО"
+#: class-botkiller.php:222 class-botkiller.php:243 class-botkiller.php:264
+msgid "You do not have permission to perform this action."
+msgstr "Немає прав для цієї дії."
 
-#: includes/class-botkiller.php:554
-msgid "Add IP ranges to block (one per line)"
-msgstr "Додайте діапазони IP для блокування (по одному на рядок)"
+#: class-botkiller.php:231
+msgid "Cloudflare IPs updated! %d IPv4, %d IPv6 ranges"
+msgstr "Cloudflare IP оновлено! %d IPv4, %d IPv6"
 
-#: includes/class-botkiller.php:554 includes/class-botkiller.php:555
-msgid "Examples"
-msgstr "Приклади"
+#: class-botkiller.php:234
+msgid "Failed to update Cloudflare IPs. Check error log for details."
+msgstr "Помилка оновлення Cloudflare IP. Перевірте лог."
 
-#: includes/class-botkiller.php:555
-msgid "Add IP ranges to whitelist (one per line)"
-msgstr "Додайте діапазони IP до білого списку (по одному на рядок)"
+#: class-botkiller.php:275
+msgid "Google/Bing IPs updated! (Google: %d, Bing: %d)"
+msgstr "Google/Bing IP оновлено! (G: %d, B: %d)"
 
-#: includes/class-botkiller.php:556
-msgid "Note: Whitelist bypasses all blocking rules"
-msgstr "Примітка: Білий список обходить всі правила блокування"
+#: class-botkiller.php:291
+msgid "All bot IP ranges updated successfully!"
+msgstr "Усі IP ботів оновлено!"
 
-#: includes/class-botkiller.php:580
+#: class-botkiller.php:335 class-botkiller.php:993
+msgid "Google IP ranges manually updated: %d ranges"
+msgstr "Google IP оновлено: %d діапазонів"
+
+#: class-botkiller.php:338 class-botkiller.php:996
+msgid "Google IP ranges updated via cron: %d ranges"
+msgstr "Google IP (cron): %d діапазонів"
+
+#: class-botkiller.php:341 class-botkiller.php:999
+msgid "Google IP ranges update failed - using fallback"
+msgstr "Помилка Google IP - резерв"
+
+#: class-botkiller.php:377 class-botkiller.php:1026
+msgid "Bing IP ranges manually updated: %d ranges"
+msgstr "Bing IP оновлено: %d діапазонів"
+
+#: class-botkiller.php:380 class-botkiller.php:1029
+msgid "Bing IP ranges updated via cron: %d ranges"
+msgstr "Bing IP (cron): %d діапазонів"
+
+#: class-botkiller.php:383 class-botkiller.php:1032
+msgid "Bing IP ranges update failed - using fallback"
+msgstr "Помилка Bing IP - резерв"
+
+#: class-botkiller.php:437
+msgid "Google bot — requires googlebot.com domain or Google IP"
+msgstr "Google бот — потрібен домен або IP Google"
+
+#: class-botkiller.php:447
+msgid "Bing bot — requires search.msn.com domain or Microsoft IP"
+msgstr "Bing бот — потрібен домен або IP Microsoft"
+
+#: class-botkiller.php:456
+msgid "Baidu bot — requires official IP ranges"
+msgstr "Baidu бот — офіційні IP"
+
+#: class-botkiller.php:466
+msgid "Yandex bot — requires DNS or IP verification"
+msgstr "Yandex бот — перевірка DNS/IP"
+
+#: class-botkiller.php:474
+msgid "DuckDuckGo bot — requires official IP ranges"
+msgstr "DuckDuckGo бот — офіційні IP"
+
+#: class-botkiller.php:481
+msgid "Seznam search crawler"
+msgstr "Seznam пошук"
+
+#: class-botkiller.php:488
+msgid "Huawei Petal search crawler"
+msgstr "Huawei Petal пошук"
+
+#: class-botkiller.php:499
+msgid "Facebook bot — requires AS32934 or AS63293"
+msgstr "Facebook бот — AS32934/AS63293"
+
+#: class-botkiller.php:507
+msgid "WhatsApp link preview bot"
+msgstr "WhatsApp прев'ю"
+
+#: class-botkiller.php:515
+msgid "LinkedIn bot — requires AS14413"
+msgstr "LinkedIn бот — AS14413"
+
+#: class-botkiller.php:523
+msgid "Pinterest bot — requires official IP ranges"
+msgstr "Pinterest бот — офіційні IP"
+
+#: class-botkiller.php:531
+msgid "Twitter bot — requires AS13414"
+msgstr "Twitter бот — AS13414"
+
+#: class-botkiller.php:539
+msgid "Discord bot — requires official IP ranges"
+msgstr "Discord бот — офіційні IP"
+
+#: class-botkiller.php:547
+msgid "Slack bot — requires official IP ranges"
+msgstr "Slack бот — офіційні IP"
+
+#: class-botkiller.php:555
+msgid "Telegram bot — requires official IP ranges"
+msgstr "Telegram бот — офіційні IP"
+
+#: class-botkiller.php:563
+msgid "Microsoft link preview bots"
+msgstr "Microsoft прев'ю"
+
+#: class-botkiller.php:574
+msgid "OpenAI bot — requires official IP ranges"
+msgstr "OpenAI бот — офіційні IP"
+
+#: class-botkiller.php:583
+msgid "Claude bot — requires official IP ranges"
+msgstr "Claude бот — офіційні IP"
+
+#: class-botkiller.php:592
+msgid "Perplexity bot — requires official IP ranges"
+msgstr "Perplexity бот — офіційні IP"
+
+#: class-botkiller.php:600
+msgid "Gemini bot — requires Google IP ranges"
+msgstr "Gemini бот — IP Google"
+
+#: class-botkiller.php:610
+msgid "Google AI crawler (Google-Extended, Vertex AI)"
+msgstr "Google AI краулер"
+
+#: class-botkiller.php:619
+msgid "Bytespider — requires ByteDance ASNs"
+msgstr "Bytespider — ASN ByteDance"
+
+#: class-botkiller.php:627
+msgid "TikTok crawler"
+msgstr "TikTok краулер"
+
+#: class-botkiller.php:636
+msgid "Mistral AI — requires AS212949 or official IP"
+msgstr "Mistral AI — AS212949"
+
+#: class-botkiller.php:645
+msgid "Grok — requires x.ai or grok.com domain"
+msgstr "Grok — домен x.ai/grok.com"
+
+#: class-botkiller.php:652
+msgid "DeepSeek AI"
+msgstr "DeepSeek AI"
+
+#: class-botkiller.php:660
+msgid "Alibaba Qwen AI — requires AS37963"
+msgstr "Qwen AI — AS37963"
+
+#: class-botkiller.php:668
+msgid "Meta AI crawler"
+msgstr "Meta AI краулер"
+
+#: class-botkiller.php:679
+msgid "Ahrefs crawler — requires official IP ranges"
+msgstr "Ahrefs краулер — офіційні IP"
+
+#: class-botkiller.php:688
+msgid "Semrush crawler — requires official IP ranges"
+msgstr "Semrush краулер — офіційні IP"
+
+#: class-botkiller.php:696
+msgid "Majestic crawler"
+msgstr "Majestic краулер"
+
+#: class-botkiller.php:704
+msgid "Moz crawler"
+msgstr "Moz краулер"
+
+#: class-botkiller.php:715
+msgid "Cloudflare bot — requires AS13335"
+msgstr "Cloudflare бот — AS13335"
+
+#: class-botkiller.php:724
+msgid "CCBot — requires crawl.commoncrawl.org domain"
+msgstr "CCBot — домен commoncrawl.org"
+
+#: class-botkiller.php:733
+msgid "Amazonbot — requires crawl.amazonbot.amazon domain"
+msgstr "Amazonbot — домен amazonbot.amazon"
+
+#: class-botkiller.php:742
+msgid "Applebot — requires applebot.apple.com domain"
+msgstr "Applebot — домен apple.com"
+
+#: class-botkiller.php:751
+msgid "YouBot AI search crawler"
+msgstr "YouBot AI пошук"
+
+#: class-botkiller.php:1406
+msgid "Starting manual update of all bot IP ranges..."
+msgstr "Ручне оновлення IP ботів..."
+
+#: class-botkiller.php:1408
+msgid "Starting weekly update of all bot IP ranges..."
+msgstr "Щотижневе оновлення IP ботів..."
+
+#: class-botkiller.php:1442
+msgid "Manual update of all bot IP ranges completed."
+msgstr "Ручне оновлення завершено."
+
+#: class-botkiller.php:1444
+msgid "Weekly update of all bot IP ranges completed."
+msgstr "Щотижневе оновлення завершено."
+
+#: class-botkiller.php:1684
 msgid "invalid"
 msgstr "недійсний"
 
-#: includes/class-botkiller.php:611 includes/class-botkiller.php:681
-#: includes/class-botkiller.php:1609
+#: class-botkiller.php:1684
+msgid "Price"
+msgstr "Ціна"
+
+#: class-botkiller.php:1698
+msgid "whitelisted ip - not blocked"
+msgstr "білий IP - пропуск"
+
+#: class-botkiller.php:1715
+msgid "ip blocked"
+msgstr "IP заблоковано"
+
+#: class-botkiller.php:1717
+msgid "auto-unblock in %s hours"
+msgstr "розблокування через %s год"
+
+#: class-botkiller.php:1784 includes/views/admin-dashboard.php:187 includes/views/admin-dashboard.php:194
 msgid "unknown"
 msgstr "невідомо"
 
-#: includes/class-botkiller.php:621 includes/class-botkiller.php:764
-#: includes/class-botkiller.php:774
+#: class-botkiller.php:1799
+msgid "access attempt blocked"
+msgstr "доступ заблоковано"
+
+#: class-botkiller.php:1802 class-botkiller.php:2023 class-botkiller.php:2189
 msgid "Access Denied - IP Blocked"
 msgstr "Доступ заборонено - IP заблоковано"
 
-#: includes/class-botkiller.php:624
+#: class-botkiller.php:1805
 msgid "Access Denied - Your IP has been blocked due to suspicious activity."
-msgstr "Доступ заборонено - Вашу IP-адресу заблоковано через підозрілу активність."
+msgstr "Доступ заборонено - підозріла активність."
 
-#: includes/class-botkiller.php:624 includes/class-botkiller.php:656
-msgid "Blocked"
-msgstr "Заблоковано"
+#: class-botkiller.php:1817
+msgid "JavaScript, cookies, and referer headers are required for this site."
+msgstr "Потрібні JS, cookies та referer."
 
-#: includes/class-botkiller.php:633
-msgid "JavaScript is required for this site."
-msgstr "Для цього сайту потрібен JavaScript."
+#: class-botkiller.php:1817
+msgid "Continue (not recommended)"
+msgstr "Продовжити (не рекомендується)"
 
-#: includes/class-botkiller.php:633
-msgid "Continue without JavaScript (not recommended)"
-msgstr "Продовжити без JavaScript (не рекомендується)"
+#: class-botkiller.php:1912
+msgid "Invalid security token"
+msgstr "Недійсний токен"
 
-#: includes/class-botkiller.php:645
-msgid "Access Denied - JavaScript is required to access this site."
-msgstr "Доступ заборонено - Для доступу до цього сайту потрібен JavaScript."
-
-#: includes/class-botkiller.php:655
+#: class-botkiller.php:1917
 msgid "Rate limit exceeded"
-msgstr "Перевищено ліміт запитів"
+msgstr "Перевищено ліміт"
 
-#: includes/class-botkiller.php:751
-msgid "Purchases are only available from selected countries"
-msgstr "Покупки доступні лише з вибраних країн"
+#: class-botkiller.php:1943 class-botkiller.php:2001
+msgid "Invalid product"
+msgstr "Недійсний товар"
 
+#: class-botkiller.php:1981
+msgid "custom rule (%s): %d %s in %ds (actual: %d in %s)"
+msgstr "правило %s: %d %s за %dс (було: %d за %s)"
 
-#: includes/class-botkiller.php:757
-msgid "Unable to verify your location"
-msgstr "Неможливо підтвердити ваше місцезнаходження"
-
-#: includes/class-botkiller.php:833 includes/class-botkiller.php:842
-#: includes/class-botkiller.php:858
+#: class-botkiller.php:1987
 msgid "Access Denied - Too many attempts"
-msgstr "Доступ заборонено - Забагато спроб"
+msgstr "Доступ заборонено - багато спроб"
 
-#: includes/class-botkiller.php:892 includes/views/admin-dashboard.php:386
-#: includes/views/admin-settings.php:468 includes/views/admin-settings.php:480
-msgid "hours"
-msgstr "год."
+#: class-botkiller.php:2018
+msgid "whitelisted ip - activity allowed"
+msgstr "білий IP - дозволено"
 
-#: includes/class-botkiller.php:951
-msgid "Rule attempts should be at least 2 to avoid false positives."
-msgstr "Кількість спроб за правилом має бути не менше 2, щоб уникнути хибних спрацьовувань."
+#: class-botkiller.php:2184
+msgid "blocked by custom blocklist"
+msgstr "блок по списку"
 
-#: includes/class-botkiller.php:956
-msgid "Rule attempts should not exceed 100."
-msgstr "Кількість спроб за правилом не повинна перевищувати 100."
+#: class-botkiller.php:2196
+msgid "Access Denied - Anonymizer detected"
+msgstr "Доступ заборонено - анонімайзер"
 
-#: includes/class-botkiller.php:967
-msgid "Rule seconds should be at least 5 to avoid false positives."
-msgstr "Кількість секунд за правилом має бути не менше 5, щоб уникнути хибних спрацьовувань."
+#: class-botkiller.php:2205
+msgid "Access Denied - Network blocked"
+msgstr "Доступ заборонено - мережа"
 
-#: includes/class-botkiller.php:972
-msgid "Rule seconds should not exceed 86400 (24 hours)."
-msgstr "Кількість секунд за правилом не повинна перевищувати 86400 (24 години)."
+#: class-botkiller.php:2216
+msgid "Access Denied - Automated browser detected"
+msgstr "Доступ заборонено - автоматизація"
 
-#: includes/class-botkiller.php:1001
+#: class-botkiller.php:2223
+msgid "Your browser is not fully supported. Please enable JavaScript and cookies."
+msgstr "Увімкніть JS та cookies."
+
+#: class-botkiller.php:2240
+msgid "blocked - country %s not allowed"
+msgstr "країна %s заборонена"
+
+#: class-botkiller.php:2241
+msgid "Purchases are only available from selected countries"
+msgstr "Покупки лише з дозволених країн"
+
+#: class-botkiller.php:2245
+msgid "blocked - unknown country"
+msgstr "невідома країна"
+
+#: class-botkiller.php:2246
+msgid "Unable to verify your location"
+msgstr "Не вдалося визначити країну"
+
+#: class-botkiller.php:2254
+msgid "Attempt to add out-of-stock product"
+msgstr "Спроба купити відсутній товар"
+
+#: class-botkiller.php:2255
+msgid "This product is out of stock"
+msgstr "Товар відсутній"
+
+#: class-botkiller.php:2363
+msgid "auto-unblocked after"
+msgstr "розблоковано через"
+
+#: class-botkiller.php:2422
+msgid "# 2 same products in 5 seconds\n2,5,0\n\n# 3 same products in 5 minutes\n3,300,0\n\n# 2 different products in 5 seconds\n2,5,1"
+msgstr "# 2 однакових за 5с\n2,5,0\n\n# 3 однакових за 5хв\n3,300,0\n\n# 2 різних за 5с\n2,5,1"
+
+#: class-botkiller.php:2515
 msgid "Bot Killer: Could not fetch search engine IP ranges. Using fallback lists which may be outdated."
-msgstr "Bot Killer: Не вдалося отримати діапазони IP пошукових систем. Використовуються резервні списки, які можуть бути застарілими."
+msgstr "Bot Killer: Не вдалося отримати IP пошуковиків. Використовуються резервні."
 
-#: includes/class-botkiller.php:1004
-msgid "Bot Killer: Could not fetch Cloudflare IP ranges. Proxy detection may not work correctly."
-msgstr "Bot Killer: Не вдалося отримати діапазони IP Cloudflare. Виявлення проксі може працювати некоректно."
+#: class-botkiller.php:2519
+msgid "Bot Killer: Cloudflare IPs not loaded. Proxy detection may not work correctly until cron updates them."
+msgstr "Bot Killer: Cloudflare IP не завантажено. Проксі-детекція може не працювати."
 
-#: includes/class-botkiller.php:1007
+#: class-botkiller.php:2523
 msgid "Bot Killer: Upload directory is not writable. Please check permissions."
-msgstr "Bot Killer: Каталог завантаження не доступний для запису. Будь ласка, перевірте права доступу."
+msgstr "Bot Killer: Директорія не доступна для запису."
 
-#: includes/class-botkiller.php:1009
+#: class-botkiller.php:2526
 msgid "Bot Killer: IP addresses are logged for security purposes. External API calls are made to ip-api.com (GeoIP) and Cloudflare (IP ranges)."
-msgstr "Bot Killer: IP-адреси записуються в журнал з метою безпеки. Зовнішні API виклики здійснюються до ip-api.com (GeoIP) та Cloudflare (діапазони IP)."
+msgstr "Bot Killer: IP логуються для безпеки. Використовуються ip-api.com та Cloudflare."
 
-#: includes/class-botkiller.php:1015
+#: class-botkiller.php:2531
 msgid "Bot Killer"
 msgstr "Bot Killer"
 
-#: includes/class-botkiller.php:1022
+#: class-botkiller.php:2539 includes/views/admin-dashboard.php:268 includes/views/admin-settings.php:22 includes/views/admin-settings.php:678
 msgid "Settings"
 msgstr "Налаштування"
 
-#: includes/class-botkiller.php:1028
+#: class-botkiller.php:2576
+msgid "Blocklist saved successfully! %d entries stored."
+msgstr "Блок-список збережено! %d записів."
+
+#: class-botkiller.php:2619
+msgid "Whitelist saved successfully! %d entries stored."
+msgstr "Білий список збережено! %d записів."
+
+#: class-botkiller.php:2668
+msgid "ASN list saved successfully! %d ASNs stored."
+msgstr "ASN список збережено! %d ASN."
+
+#: class-botkiller.php:2744
+msgid "IP lists and ASN list saved successfully!"
+msgstr "Списки IP та ASN збережено!"
+
+#: class-botkiller.php:2858 includes/views/admin-dashboard.php:13 includes/views/admin-settings.php:13
 msgid "You do not have sufficient permissions to access this page."
-msgstr "У вас недостатньо прав для доступу до цієї сторінки."
+msgstr "Недостатньо прав для доступу."
 
-#: includes/class-botkiller.php:1174
-msgid "Settings saved successfully!"
-msgstr "Налаштування успішно збережено!"
+#: class-botkiller.php:2876
+msgid "manually unblocked by admin"
+msgstr "розблоковано адміном"
 
-#: includes/class-botkiller.php:1313
+#: class-botkiller.php:2878
 msgid "ip %s unblocked!"
 msgstr "IP %s розблоковано!"
 
-#: includes/class-botkiller.php:1322
+#: class-botkiller.php:2888
 msgid "all auto-blocked ips manually cleared by admin"
-msgstr "всі автоматично заблоковані IP очищено адміністратором вручну"
+msgstr "усі автоматичні блокування очищено"
 
-#: includes/class-botkiller.php:1324
+#: class-botkiller.php:2890
 msgid "all auto-blocked ips unblocked!"
-msgstr "всі автоматично заблоковані IP розблоковано!"
+msgstr "усі автоматичні IP розблоковано!"
 
-#: includes/class-botkiller.php:1329
+#: class-botkiller.php:2896
 msgid "LOG CLEARED"
 msgstr "ЛОГ ОЧИЩЕНО"
 
-#: includes/class-botkiller.php:1332
+#: class-botkiller.php:2899
 msgid "log cleared!"
 msgstr "лог очищено!"
 
-#: includes/views/admin-dashboard.php:5
+#: includes/views/admin-dashboard.php:18
 msgid "Bot Killer Dashboard"
-msgstr "Панель керування Bot Killer"
+msgstr "Панель Bot Killer"
 
-#: includes/views/admin-dashboard.php:10
-msgid "Search Engine IPs:"
-msgstr "IP-адреси:"
-
-#: includes/views/admin-dashboard.php:16
-msgid "Google (%d), Bing (%d)"
-msgstr "Google (%d), Bing (%d)"
-
-#: includes/views/admin-dashboard.php:18 includes/views/admin-dashboard.php:26
-#: includes/views/admin-settings.php:19 includes/views/admin-settings.php:27
-msgid "Not loaded"
-msgstr "Не завантажено"
-
-#: includes/views/admin-dashboard.php:22
-msgid "Cloudflare IPs:"
-msgstr "IP-адреси Cloudflare:"
-
-#: includes/views/admin-dashboard.php:24
-msgid "Loaded (%d IPv4, %d IPv6)"
-msgstr "Завантажено (%d IPv4, %d IPv6)"
-
-#: includes/views/admin-dashboard.php:29
-msgid "Allowed Countries:"
-msgstr "Країни:"
-
-#: includes/views/admin-dashboard.php:30
-msgid "All countries"
-msgstr "Всі країни"
-
-#: includes/views/admin-dashboard.php:186
-msgid "Auto Blocked"
-msgstr "Автозаблоковані"
-
-#: includes/views/admin-dashboard.php:188
-msgid "Temporarily blocked IPs"
-msgstr "Тимчасово заблоковані IP"
-
-#: includes/views/admin-dashboard.php:194
-msgid "Custom Blocked"
-msgstr "Заблоковані"
-
-#: includes/views/admin-dashboard.php:196
-msgid "Permanently blocked IPs"
-msgstr "Постійно заблоковані IP"
-
-#: includes/views/admin-dashboard.php:202
-msgid "Whitelisted"
-msgstr "Дозволені"
-
-#: includes/views/admin-dashboard.php:204
-msgid "Always allowed IPs"
-msgstr "Завжди дозволені IP"
-
-#: includes/views/admin-dashboard.php:210
-msgid "Your IP"
-msgstr "Ваш IP"
-
-#: includes/views/admin-dashboard.php:212
-msgid "Current visitor"
-msgstr "Поточний відвідувач"
-
-#: includes/views/admin-dashboard.php:218
-msgid "Status"
-msgstr "Статус"
-
-#: includes/views/admin-dashboard.php:220 includes/views/admin-dashboard.php:221
-msgid "Active"
-msgstr "Активний"
-
-#: includes/views/admin-dashboard.php:222
-msgid "Protection enabled"
-msgstr "Захист увімкнено"
-
-#: includes/views/admin-dashboard.php:228
-msgid "Timezone"
-msgstr "Часовий пояс"
-
-#: includes/views/admin-dashboard.php:230
-msgid "Log timestamps"
-msgstr "Мітки часу в лозі"
-
-#: includes/views/admin-dashboard.php:242
+#: includes/views/admin-dashboard.php:151 includes/views/admin-dashboard.php:306
 msgid "Auto-blocked IPs"
-msgstr "Автоматично заблоковані IP"
+msgstr "Авто-блок IP"
 
-#: includes/views/admin-dashboard.php:244
-msgid "Refresh"
-msgstr "Оновити"
+#: includes/views/admin-dashboard.php:154
+msgid "Refresh IP List"
+msgstr "Оновити список"
 
-#: includes/views/admin-dashboard.php:248
-msgid "Remove all auto-blocks?"
+#: includes/views/admin-dashboard.php:159
+msgid "Remove all auto-blocks? This action cannot be undone."
 msgstr "Видалити всі автоматичні блокування?"
 
-#: includes/views/admin-dashboard.php:249
-msgid "Unblock All"
+#: includes/views/admin-dashboard.php:160
+msgid "Unblock All IP"
 msgstr "Розблокувати всі"
 
-#: includes/views/admin-dashboard.php:261
+#: includes/views/admin-dashboard.php:169
 msgid "IP Address"
-msgstr "IP-адреса"
+msgstr "IP адреса"
 
-#: includes/views/admin-dashboard.php:262
+#: includes/views/admin-dashboard.php:170
 msgid "Location"
-msgstr "Місцезнаходження"
+msgstr "Локація"
 
-#: includes/views/admin-dashboard.php:264
+#: includes/views/admin-dashboard.php:171
+msgid "Blocked"
+msgstr "Заблоковано"
+
+#: includes/views/admin-dashboard.php:172
 msgid "Unblocks In"
-msgstr "Розблокується через"
+msgstr "Розблокування"
 
-#: includes/views/admin-dashboard.php:265
+#: includes/views/admin-dashboard.php:173
 msgid "Action"
 msgstr "Дія"
 
-#: includes/views/admin-dashboard.php:284
+#: includes/views/admin-dashboard.php:205
+msgid "expiring soon"
+msgstr "скоро"
+
+#: includes/views/admin-dashboard.php:208
 msgid "expired"
 msgstr "минув"
 
-#: includes/views/admin-dashboard.php:287
+#: includes/views/admin-dashboard.php:210 includes/views/admin-dashboard.php:243
 msgid "permanent"
-msgstr "постійно"
+msgstr "назавжди"
 
-#: includes/views/admin-dashboard.php:291
+#: includes/views/admin-dashboard.php:218
+msgid "Unblock this IP?"
+msgstr "Розблокувати IP?"
+
+#: includes/views/admin-dashboard.php:219
 msgid "Unblock"
 msgstr "Розблокувати"
 
-#: includes/views/admin-dashboard.php:298
-msgid "No auto-blocked IPs yet"
-msgstr "Автоматично заблокованих IP ще немає"
+#: includes/views/admin-dashboard.php:231
+msgid "total blocked"
+msgstr "всього блок"
 
-#: includes/views/admin-dashboard.php:306
-msgid "Active Rules"
-msgstr "Активні правила"
+#: includes/views/admin-dashboard.php:232
+msgid "auto-unblock"
+msgstr "авто-блок"
 
-#: includes/views/admin-dashboard.php:307
-msgid "Configure"
-msgstr "Налаштувати"
+#: includes/views/admin-dashboard.php:238
+msgid "expiring in < 1h"
+msgstr "< 1 год"
 
-#: includes/views/admin-dashboard.php:315 includes/views/admin-settings.php:207
-msgid "Rule 1: Rapid Attempts"
-msgstr "Правило 1: Швидкі спроби"
-
-#: includes/views/admin-dashboard.php:316 includes/views/admin-dashboard.php:325
-msgid "%d adds in %ds"
-msgstr "%d додавань за %dс"
-
-#: includes/views/admin-dashboard.php:319 includes/views/admin-dashboard.php:328
-#: includes/views/admin-dashboard.php:337 includes/views/admin-dashboard.php:346
-#: includes/views/admin-dashboard.php:355 includes/views/admin-dashboard.php:364
-msgid "Enabled"
-msgstr "Увімкнено"
-
-#: includes/views/admin-dashboard.php:320 includes/views/admin-dashboard.php:329
-#: includes/views/admin-dashboard.php:338 includes/views/admin-dashboard.php:347
-#: includes/views/admin-dashboard.php:356 includes/views/admin-dashboard.php:365
-msgid "Disabled"
-msgstr "Вимкнено"
-
-#: includes/views/admin-dashboard.php:324 includes/views/admin-settings.php:232
-msgid "Rule 2: Multiple Attempts"
-msgstr "Правило 2: Багаторазові спроби"
-
-#: includes/views/admin-dashboard.php:333 includes/views/admin-settings.php:253
-msgid "Rule 3: Different Products"
-msgstr "Правило 3: Різні товари"
-
-#: includes/views/admin-dashboard.php:334
-msgid "%d products in %ds"
-msgstr "%d товарів за %dс"
-
-#: includes/views/admin-dashboard.php:342
-msgid "Custom Rules"
-msgstr "Користувацькі правила"
-
-#: includes/views/admin-dashboard.php:343
-msgid "User-defined blocking rules"
-msgstr "Визначені користувачем правила блокування"
-
-#: includes/views/admin-dashboard.php:351 includes/views/admin-settings.php:299
-msgid "No JavaScript Blocking"
-msgstr "Блокування без JavaScript"
-
-#: includes/views/admin-dashboard.php:352 includes/views/admin-settings.php:302
-msgid "Block visitors without JS"
-msgstr "Блокувати відвідувачів без JS"
-
-#: includes/views/admin-dashboard.php:360 includes/views/admin-settings.php:313
-msgid "Out of Stock Blocker"
-msgstr "Блокувальник відсутніх товарів"
-
-#: includes/views/admin-dashboard.php:361 includes/views/admin-settings.php:316
-msgid "Block out-of-stock attempts"
-msgstr "Блокувати спроби додати відсутні товари"
-
-#: includes/views/admin-dashboard.php:373
-msgid "Priority Order:"
-msgstr "Пріоритет:"
-
-#: includes/views/admin-dashboard.php:374 includes/views/admin-settings.php:186
-msgid "Whitelist"
-msgstr "Білий список"
-
-#: includes/views/admin-dashboard.php:375
-msgid "Search Engines"
-msgstr "Пошукові системи"
-
-#: includes/views/admin-dashboard.php:376
-msgid "Country Filter"
-msgstr "Фільтр країн"
-
-#: includes/views/admin-dashboard.php:377 includes/views/admin-settings.php:172
-msgid "Blocklist"
-msgstr "Список блокування"
-
-#: includes/views/admin-dashboard.php:378
-msgid "No-JS Block"
-msgstr "Блокування без JS"
-
-#: includes/views/admin-dashboard.php:379
-msgid "Auto-blocked"
-msgstr "Автоматично заблоковані"
-
-#: includes/views/admin-dashboard.php:380
-msgid "Rules (1-4)"
-msgstr "Правила (1-4)"
-
-#: includes/views/admin-dashboard.php:386
-msgid "Auto-unblock:"
-msgstr "Авторозблокування:"
-
-#: includes/views/admin-dashboard.php:386
-msgid "%s hours"
-msgstr "%s годин"
-
-#: includes/views/admin-dashboard.php:387
+#: includes/views/admin-dashboard.php:246
 msgid "Timezone:"
 msgstr "Час:"
 
-#: includes/views/admin-dashboard.php:399
-msgid "Live Log"
-msgstr "Поточні події"
-
-#: includes/views/admin-dashboard.php:401
-msgid "Refresh Log"
-msgstr "Оновити лог"
-
-#: includes/views/admin-dashboard.php:403
-msgid "Clear Log"
-msgstr "Очистити лог"
-
-#: includes/views/admin-dashboard.php:469
-msgid "No log entries yet"
-msgstr "Записів у лозі ще немає"
-
-#: includes/views/admin-dashboard.php:477
-msgid "timestamps in GMT%s | total displayed: %d | Geo data: [country code - city]"
-msgstr "мітки часу за GMT%s | всього відображено: %d | Geo дані: [код країни - місто]"
-
-#: includes/views/admin-settings.php:5
-msgid "Bot Killer Settings"
-msgstr "Налаштування Bot Killer"
-
-#: includes/views/admin-settings.php:13
-msgid "Google (%d ranges), Bing (%d ranges)"
-msgstr "Google (%d діапазонів), Bing (%d діапазонів)"
-
-#: includes/views/admin-settings.php:30
-msgid "Active Rules:"
-msgstr "Активні правила:"
-
-#: includes/views/admin-settings.php:40
-msgid "%d rules active"
-msgstr "%d активно"
-
-#: includes/views/admin-settings.php:166
-msgid "IP Lists"
-msgstr "Списки IP"
-
-#: includes/views/admin-settings.php:174 includes/views/admin-settings.php:190
-msgid "active"
-msgstr "активно"
-
-#: includes/views/admin-settings.php:176
-msgid "IPs/ranges that will be blocked immediately"
-msgstr "IP/діапазони, які будуть негайно заблоковані"
-
-#: includes/views/admin-settings.php:192
-msgid "IPs/ranges that bypass all blocking rules"
-msgstr "IP/діапазони, які обходять всі правила блокування"
-
-#: includes/views/admin-settings.php:194
-msgid "single IP, CIDR (IPv4/IPv6), range (IPv4 only), # for comments"
-msgstr "один IP, CIDR (IPv4/IPv6), діапазон (тільки IPv4), # для коментарів"
-
-#: includes/views/admin-settings.php:210
-msgid "Enable Rule"
-msgstr "Увімкнути правило"
-
-#: includes/views/admin-settings.php:215
-msgid "Block after"
-msgstr "Блокувати після"
-
-#: includes/views/admin-settings.php:218 includes/views/admin-settings.php:238
-#: includes/views/admin-settings.php:259
-msgid "attempts in"
-msgstr "спроб за"
-
-#: includes/views/admin-settings.php:220 includes/views/admin-settings.php:240
-#: includes/views/admin-settings.php:261
-msgid "seconds"
-msgstr "секунд"
-
-#: includes/views/admin-settings.php:223
-msgid "Default: 2 attempts in 10 seconds. Blocks rapid same-product additions."
-msgstr "За замовчуванням: 2 спроби за 10 секунд. Блокує швидке додавання одного товару."
-
-#: includes/views/admin-settings.php:245
-msgid "Default: 3 attempts in 300 seconds. Blocks repeated same-product additions."
-msgstr "За замовчуванням: 3 спроби за 300 секунд. Блокує повторне додавання одного товару."
-
-#: includes/views/admin-settings.php:264
-msgid "different products in"
-msgstr "різних товарів за"
-
-#: includes/views/admin-settings.php:268
-msgid "Catches inventory scraping bots adding many different items quickly."
-msgstr "Виявляє ботів, які швидко додають багато різних товарів для збору даних про наявність."
-
-#: includes/views/admin-settings.php:285
-msgid "attempts,seconds (one per line)"
-msgstr "спроби,секунди (по одному на рядок)"
-
-#: includes/views/admin-settings.php:286
-msgid "5,3600 (5 attempts in 1 hour), 10,120 (10 attempts in 2 minutes)"
-msgstr "5,3600 (5 спроб за 1 годину), 10,120 (10 спроб за 2 хвилини)"
-
-#: includes/views/admin-settings.php:305
-msgid "Many bots don't execute JavaScript. Enabling this will block them."
-msgstr "Багато ботів не виконують JavaScript. Увімкнення цього заблокує їх."
-
-#: includes/views/admin-settings.php:319
-msgid "Blocks visitors who try to add out-of-stock products. Helps prevent inventory checking bots."
-msgstr "Блокує відвідувачів, які намагаються додати відсутні товари. Допомагає запобігти ботам, що перевіряють наявність."
-
-#: includes/views/admin-settings.php:320
-msgid "Warning:"
-msgstr "Попередження:"
-
-#: includes/views/admin-settings.php:320
-msgid "May block legitimate customers."
-msgstr "Може блокувати справжніх покупців."
-
-#: includes/views/admin-settings.php:329
-msgid "Country Blocking"
-msgstr "Блокування за країнами"
-
-#: includes/views/admin-settings.php:332
-msgid "Allow add-to-cart only from:"
-msgstr "Дозволити додавання до кошика тільки з:"
-
-#: includes/views/admin-settings.php:399
-msgid "Hold Ctrl/Cmd to select multiple. Leave empty to disable."
-msgstr "Утримуйте Ctrl/Cmd для вибору кількох. Залиште порожнім, щоб вимкнути."
-
-#: includes/views/admin-settings.php:407
-msgid "Block unknown countries"
-msgstr "Блокувати невідомі країни"
-
-#: includes/views/admin-settings.php:409
-msgid "When geolocation fails to detect country, block the request."
-msgstr "Коли геолокація не може визначити країну, блокувати запит."
-
-#: includes/views/admin-settings.php:418
-msgid "GeoIP Configuration"
-msgstr "Налаштування GeoIP"
-
-#: includes/views/admin-settings.php:422
-msgid "Primary Service:"
-msgstr "Основний сервіс:"
-
-#: includes/views/admin-settings.php:430
-msgid "Cache Duration:"
-msgstr "Час зберігання кешу:"
-
-#: includes/views/admin-settings.php:433
-msgid "1 hour"
-msgstr "1 година"
-
-#: includes/views/admin-settings.php:434
-msgid "6 hours"
-msgstr "6 годин"
-
-#: includes/views/admin-settings.php:435
-msgid "12 hours"
-msgstr "12 годин"
-
-#: includes/views/admin-settings.php:436
-msgid "24 hours"
-msgstr "24 години"
-
-#: includes/views/admin-settings.php:437
-msgid "48 hours"
-msgstr "48 годин"
-
-#: includes/views/admin-settings.php:438
-msgid "72 hours"
-msgstr "72 години"
-
-#: includes/views/admin-settings.php:439
-msgid "1 week"
-msgstr "1 тиждень"
-
-#: includes/views/admin-settings.php:446
-msgid "Enable fallback"
-msgstr "Увімкнути резервні сервіси"
-
-#: includes/views/admin-settings.php:450
-msgid "Disable GeoIP"
-msgstr "Вимкнути GeoIP"
-
-#: includes/views/admin-settings.php:462
-msgid "Auto-unblock Settings"
-msgstr "Налаштування авторозблокування"
-
-#: includes/views/admin-settings.php:465
-msgid "Unblock after"
-msgstr "Розблокувати через"
-
-#: includes/views/admin-settings.php:470
-msgid "Auto-blocked IPs are automatically unblocked after this time."
-msgstr "Автоматично заблоковані IP розблоковуються автоматично після цього часу."
-
-#: includes/views/admin-settings.php:476
-msgid "Log Settings"
-msgstr "Налаштування логу"
-
-#: includes/views/admin-settings.php:479
-msgid "Max log size"
-msgstr "Максимальний розмір логу"
-
-#: includes/views/admin-settings.php:483
-msgid "Logs include geographic location when GeoIP is enabled."
-msgstr "Логи містять географічне місцезнаходження, коли GeoIP увімкнено."
-
-#: includes/views/admin-settings.php:492
-msgid "Select timezone"
-msgstr "Оберіть часовий пояс"
-
-#: includes/views/admin-settings.php:511
-msgid "Update Cloudflare IPs Now"
-msgstr "Оновити Cloudflare IP зараз"
-
-msgid "Update Google/Bing IPs Now"
-msgstr "Оновити Google/Bing IP зараз"
-
-#: includes/views/admin-settings.php:514
-msgid "Return to Dashboard"
-msgstr "Повернутися до панелі керування"
-
-#: includes/views/admin-settings.php:515
-msgid "Save All Settings"
-msgstr "Зберегти всі налаштування"
-
-#: includes/views/admin-settings.php:523
-msgid "Update Cloudflare IP ranges now? This may take a few seconds."
-msgstr "Оновити діапазони IP Cloudflare зараз? Це може зайняти кілька секунд."
-
-#: includes/views/admin-settings.php:528
-msgid "Updating..."
-msgstr "Оновлення..."
-
-#: includes/views/admin-settings.php:541
-msgid "Cloudflare IPs updated successfully!"
-msgstr "Cloudflare IP успішно оновлено!"
-
-#: includes/views/admin-settings.php:544
-msgid "Failed to update Cloudflare IPs"
-msgstr "Не вдалося оновити Cloudflare IP"
-
-#: includes/views/admin-settings.php:548
-msgid "Error updating Cloudflare IPs"
-msgstr "Помилка оновлення Cloudflare IP"
-
-#: botkiller.php:17
-msgid "Advanced bot protection for WooCommerce"
-msgstr "Розширений захист від ботів для WooCommerce"
-
-#: botkiller.php:37
-msgid "Bot Killer requires WooCommerce to be installed and activated."
-msgstr "Bot Killer вимагає встановлення та активації WooCommerce."
-
-msgid "Fallback tries other services if primary fails."
-msgstr "Резервний механізм використовує інші сервіси, якщо основний недоступний."
-
-msgid "Save IP Lists"
-msgstr "Зберегти Список IP"
-
-msgid "Always Allowed"
-msgstr "Дозволено"
-
+#: includes/views/admin-dashboard.php:256
+msgid "No auto-blocked IPs yet"
+msgstr "Немає авто-блоків"
+
+#: includes/views/admin-dashboard.php:257
+msgid "When bots are detected, they will appear here"
+msgstr "Тут будуть заблоковані боти"
+
+#: includes/views/admin-dashboard.php:266 includes/views/admin-settings.php:574
+msgid "Active Rules"
+msgstr "Активні правила"
+
+#: includes/views/admin-dashboard.php:277
+msgid "IP ranges bypass all rules"
+msgstr "IP обходять правила"
+
+#: includes/views/admin-dashboard.php:284 includes/views/admin-settings.php:169
+msgid "Blocklist"
+msgstr "Чорний список"
+
+#: includes/views/admin-dashboard.php:285
+msgid "IP ranges manually blocked"
+msgstr "IP вручну заблоковані"
+
+#: includes/views/admin-dashboard.php:292 includes/views/admin-settings.php:239
+msgid "ASN Blocklist"
+msgstr "ASN чорний список"
+
+#: includes/views/admin-dashboard.php:299
+msgid "networks blocked"
+msgstr "мереж заблоковано"
+
+#: includes/views/admin-dashboard.php:307
+msgid "IPs automatically blocked"
+msgstr "IP автоматично"
+
+#: includes/views/admin-dashboard.php:314 includes/views/admin-dashboard.php:405
+msgid "Country Filter"
+msgstr "Фільтр країн"
+
+#: includes/views/admin-dashboard.php:319
+msgid "countries allowed:"
+msgstr "дозволені:"
+
+#: includes/views/admin-dashboard.php:320
+msgid "block unknown"
+msgstr "блок невідомі"
+
+#: includes/views/admin-dashboard.php:322
+msgid "All countries allowed"
+msgstr "Всі країни"
+
+#: includes/views/admin-dashboard.php:331 includes/views/admin-dashboard.php:399
+msgid "Tor Exit Node"
+msgstr "Tor вихідні"
+
+#: includes/views/admin-dashboard.php:337
+msgid "nodes blocked"
+msgstr "вузлів заблоковано"
+
+#: includes/views/admin-dashboard.php:345
+msgid "Out of Stock Blocker"
+msgstr "Блок відсутніх товарів"
+
+#: includes/views/admin-dashboard.php:346
+msgid "Block out-of-stock attempts"
+msgstr "Блок спроб купити відсутні товари"
+
+#: includes/views/admin-dashboard.php:353 includes/views/admin-dashboard.php:401
+msgid "Headless Detection"
+msgstr "Детекція headless"
+
+#: includes/views/admin-dashboard.php:354
+msgid "Blocks headless browsers"
+msgstr "Блок headless браузерів"
+
+#: includes/views/admin-dashboard.php:361 includes/views/admin-dashboard.php:402
+msgid "Browser Integrity"
+msgstr "Цілісність браузера"
+
+#: includes/views/admin-dashboard.php:362
+msgid "JS, Cookies, Referer check"
+msgstr "Перевірка JS/Cookies/Referer"
+
+#: includes/views/admin-dashboard.php:369 includes/views/admin-dashboard.php:407 includes/views/admin-settings.php:570
+msgid "Custom Rules"
+msgstr "Правила Блокування"
+
+#: includes/views/admin-dashboard.php:370
+msgid "User-defined blocking rules"
+msgstr "Користувацькі правила"
+
+#: includes/views/admin-dashboard.php:381
 msgid "Add-to-Cart Bots"
 msgstr "Add-to-Cart Боти"
 
-msgid "Rule 4: Custom Rules"
-msgstr "Правило 4: Користувацькі правила"
+#: includes/views/admin-dashboard.php:383
+msgid "Google, Bing, Facebook, OpenAI, Anthropic, Telegram, Gemini, Perplexity, Baidu, Yandex, DuckDuckGo, LinkedIn, Pinterest, Twitter, Discord, Slack, CCBot, Amazonbot, Applebot, Bytespider, YouBot, Ahrefs, Semrush, MJ12, DotBot, Meta AI, TikTok, Seznam, PetalBot, WhatsApp, Mistral, Grok, DeepSeek, Qwen"
+msgstr "Google, Bing, Facebook, OpenAI, Anthropic, Telegram, Gemini, Perplexity, Baidu, Yandex, DuckDuckGo, LinkedIn, Pinterest, Twitter, Discord, Slack, CCBot, Amazonbot, Applebot, Bytespider, YouBot, Ahrefs, Semrush, MJ12, DotBot, Meta AI, TikTok, Seznam, PetalBot, WhatsApp, Mistral, Grok, DeepSeek, Qwen"
 
+#: includes/views/admin-dashboard.php:390
+msgid "Priority Order:"
+msgstr "Пріоритет:"
+
+#: includes/views/admin-dashboard.php:393
+msgid "Whitelist"
+msgstr "Білий список"
+
+#: includes/views/admin-dashboard.php:394
+msgid "Custom Blocklist"
+msgstr "Чорний список"
+
+#: includes/views/admin-dashboard.php:395
+msgid "Auto-blocked"
+msgstr "Авто-блок"
+
+
+#: includes/views/admin-dashboard.php:400
+msgid "ASN Block"
+msgstr "ASN блок"
+
+#: includes/views/admin-dashboard.php:406
+msgid "Out of Stock"
+msgstr "Немає в наявності"
+
+#: includes/views/admin-dashboard.php:418
+msgid "Live Log"
+msgstr "Лог"
+
+#: includes/views/admin-dashboard.php:420
+msgid "Refresh Log"
+msgstr "Оновити лог"
+
+#: includes/views/admin-dashboard.php:422
+msgid "Empty Log"
+msgstr "Очистити лог"
+
+#: includes/views/admin-dashboard.php:579
+msgid "No log entries yet"
+msgstr "Лог порожній"
+
+#: includes/views/admin-dashboard.php:587
+msgid "timestamps in GMT%s | total displayed: %d | Geo data: [country code - city]"
+msgstr "час GMT%s | показувати: %d | Geo: [код - місто]"
+
+#: includes/views/admin-settings.php:18
+msgid "BotKiller Settings"
+msgstr "Налаштування BotKiller"
+
+#: includes/views/admin-settings.php:173 includes/views/admin-settings.php:208
+msgid "Active Blocks"
+msgstr "Активні блоки"
+
+#: includes/views/admin-settings.php:176 includes/views/admin-settings.php:211
+msgid "IP ranges"
+msgstr "IP діапазони"
+
+#: includes/views/admin-settings.php:181
+msgid "Single IP, CIDR, range, or IPv6. Use # for comments."
+msgstr "Один IP, CIDR, діапазон або IPv6. # для коментарів."
+
+#: includes/views/admin-settings.php:185 includes/views/admin-settings.php:220 includes/views/admin-settings.php:266
+msgid "Last saved:"
+msgstr "Збережено:"
+
+#: includes/views/admin-settings.php:191 includes/views/admin-settings.php:226 includes/views/admin-settings.php:272 includes/views/admin-settings.php:335 includes/views/admin-settings.php:382
+msgid "Never"
+msgstr "Ніколи"
+
+#: includes/views/admin-settings.php:193 includes/views/admin-settings.php:228 includes/views/admin-settings.php:274 includes/views/admin-settings.php:337 includes/views/admin-settings.php:384
+msgid "ago"
+msgstr "тому"
+
+#: includes/views/admin-settings.php:194
+msgid "Save Blocklist"
+msgstr "Зберегти чорний список"
+
+#: includes/views/admin-settings.php:216
+msgid "IPs that bypass all blocking rules. Use # for comments."
+msgstr "IP що обходять правила. # для коментарів."
+
+#: includes/views/admin-settings.php:229
+msgid "Save Whitelist"
+msgstr "Зберегти білий список"
+
+#: includes/views/admin-settings.php:243
+msgid "Blocked ASNs"
+msgstr "Заблоковані ASN"
+
+#: includes/views/admin-settings.php:258
+msgid "networks"
+msgstr "мереж"
+
+#: includes/views/admin-settings.php:262
+msgid "ASN numbers (13335, 16509). Use # for comments."
+msgstr "Номери ASN. # для коментарів."
+
+#: includes/views/admin-settings.php:275
+msgid "Save ASN List"
+msgstr "Зберегти ASN"
+
+#: includes/views/admin-settings.php:286
+msgid "Bot, Search Engines and Cloudflare"
+msgstr "Боти, пошук та Cloudflare"
+
+#: includes/views/admin-settings.php:290
+msgid "Bot Types"
+msgstr "Типи ботів"
+
+#: includes/views/admin-settings.php:293
+msgid "supported"
+msgstr "підтримується"
+
+#: includes/views/admin-settings.php:297 includes/views/admin-settings.php:358
+msgid "Update Frequency"
+msgstr "Частота оновлення"
+
+#: includes/views/admin-settings.php:299
+msgid "Weekly"
+msgstr "Щотижня"
+
+#: includes/views/admin-settings.php:300 includes/views/admin-settings.php:360
+msgid "via cron"
+msgstr "через cron"
+
+#: includes/views/admin-settings.php:304 includes/views/admin-settings.php:537 includes/views/admin-settings.php:550
+msgid "Cache Duration"
+msgstr "Кешування"
+
+#: includes/views/admin-settings.php:306 includes/views/admin-settings.php:354
+msgid "IP addresses"
+msgstr "IP адреси"
+
+#: includes/views/admin-settings.php:325
+msgid "All IP ranges are automatically updated weekly via cron."
+msgstr "Всі IP діапазони оновлюються щотижня через cron."
+
+#: includes/views/admin-settings.php:329 includes/views/admin-settings.php:374
+msgid "Last update:"
+msgstr "Оновлено:"
+
+#: includes/views/admin-settings.php:338
+msgid "Update All IP Ranges"
+msgstr "Оновити всі IP"
+
+#: includes/views/admin-settings.php:346
+msgid "Tor Exit Nodes"
+msgstr "Tor вихідні вузли"
+
+#: includes/views/admin-settings.php:350
+msgid "Active Nodes"
+msgstr "Активні вузли"
+
+#: includes/views/admin-settings.php:365
+msgid "Block Tor exit nodes"
+msgstr "Блокувати Tor"
+
+#: includes/views/admin-settings.php:370
+msgid "Blocks visitors using Tor anonymizer network. Updated every 12 hours."
+msgstr "Блокує відвідувачів через Tor. Оновлюється кожні 12 годин."
+
+#: includes/views/admin-settings.php:386
+msgid "Update Tor Nodes"
+msgstr "Оновити Tor"
+
+#: includes/views/admin-settings.php:397
+msgid "Block missing JS/cookies/referer"
+msgstr "Блок без JS/cookies"
+
+#: includes/views/admin-settings.php:403
+msgid "Block headless browsers"
+msgstr "Блок headless"
+
+#: includes/views/admin-settings.php:408
+msgid "Blocks bots missing JavaScript, cookies, or referer headers."
+msgstr "Блокує ботів без JS/cookies/referer."
+
+#: includes/views/admin-settings.php:416
+msgid "Block out of stock attempts"
+msgstr "Блок спроб купити відсутні товари"
+
+#: includes/views/admin-settings.php:421
+msgid "When a visitor tries to add an out-of-stock product to cart, their IP is immediately blocked."
+msgstr "При спробі додати відсутній товар - IP блокується."
+
+#: includes/views/admin-settings.php:432
+msgid "Country Access Control"
+msgstr "Контроль доступу з країн"
+
+#: includes/views/admin-settings.php:436
+msgid "Allowed Countries"
+msgstr "Дозволені країни"
+
+#: includes/views/admin-settings.php:440
+msgid "selected"
+msgstr "вибрано"
+
+#: includes/views/admin-settings.php:444
+msgid "Block unknown countries"
+msgstr "Блокувати невідомі"
+
+#: includes/views/admin-settings.php:450
+msgid "Allow add-to-cart only from:"
+msgstr "Дозволити покупки тільки з:"
+
+#: includes/views/admin-settings.php:524
+msgid "Hold Ctrl/Cmd to select multiple. Leave empty to allow all."
+msgstr "Ctrl/Cmd для вибору кількох. Порожньо - всі країни."
+
+#: includes/views/admin-settings.php:533
+msgid "GeoIP Service"
+msgstr "GeoIP сервіс"
+
+#: includes/views/admin-settings.php:540
+msgid "cached"
+msgstr "кеш"
+
+#: includes/views/admin-settings.php:544
+msgid "Primary Service"
+msgstr "Основний сервіс"
+
+#: includes/views/admin-settings.php:560
+msgid "Geolocation provider, cache time, and fallback settings."
+msgstr "GeoIP провайдер, час кешу та резерв."
+
+#: includes/views/admin-settings.php:564
+msgid "Enable fallback"
+msgstr "Резерв"
+
+#: includes/views/admin-settings.php:584
 msgid "Enable Custom Rules"
-msgstr "Увімкнути користувацькі правила"
+msgstr "Увімкнути правила блокування"
 
-msgid "Format:"
-msgstr "Формат:"
+#: includes/views/admin-settings.php:592
+msgid "Format: attempts,seconds,type (0=same, 1=different, 2=any). Use # for comments."
+msgstr "Формат: спроб,секунд,тип (0=однакові, 1=різні, 2=будь-які). # коментар."
 
-msgid "attempts,seconds,type (one per line)"
-msgstr "кількість,секунди,тип (один на рядок)"
+#: includes/views/admin-settings.php:598
+msgid "Save your custom rules"
+msgstr "Зберегти правила блокування"
 
-msgid "Types:"
-msgstr "Типи:"
+#: includes/views/admin-settings.php:600
+msgid "Save All Rules"
+msgstr "Зберегти всі"
 
-msgid "0 - same products, 1 - different products, 2 - any products"
-msgstr "0 - однакові товари, 1 - різні товари, 2 - будь-які"
+#: includes/views/admin-settings.php:609
+msgid "System Settings"
+msgstr "Система"
 
-msgid "Examples:"
-msgstr "Приклади:"
+#: includes/views/admin-settings.php:614
+msgid "Auto-unblock"
+msgstr "Авто-розблокування"
 
-msgid "3 same products in 30 seconds"
-msgstr "3 однакових товари за 30 секунд"
+#: includes/views/admin-settings.php:617
+msgid "after block"
+msgstr "після блоку"
 
-msgid "3 different products in 20 seconds"
-msgstr "3 різних товари за 20 секунд"
+#: includes/views/admin-settings.php:621
+msgid "Max Log Size"
+msgstr "Макс розмір логу"
 
-msgid "5 any actions in 60 seconds"
-msgstr "5 будь-яких дій за 60 секунд"
+#: includes/views/admin-settings.php:624
+msgid "before rotation"
+msgstr "до ротації"
 
-msgid "2 same products in 5 minutes (product revisit)"
-msgstr "2 однакових товари за 5 хвилин (повернення до товару)"
+#: includes/views/admin-settings.php:630
+msgid "Auto-unblock after"
+msgstr "Розблокувати через"
 
+#: includes/views/admin-settings.php:639 includes/views/admin-settings.php:1717
+msgid "hours"
+msgstr "год"
+
+#: includes/views/admin-settings.php:645
+msgid "Max log size"
+msgstr "Макс лог"
+
+#: includes/views/admin-settings.php:655
+msgid "Time zone (GMT)"
+msgstr "Час (GMT)"
+
+#: includes/views/admin-settings.php:670
+msgid "Configure auto-unblock time, log rotation, and timezone."
+msgstr "Налаштування часу, логу та часового поясу."
+
+#: includes/views/admin-settings.php:679
+msgid "Save All Settings"
+msgstr "Зберегти все"
+
+#: includes/views/admin-settings.php:686
+msgid "Update Tor exit nodes?"
+msgstr "Оновити Tor вузли?"
+
+#: includes/views/admin-settings.php:701 includes/views/admin-settings.php:732
+msgid "just now"
+msgstr "щойно"
+
+#: includes/views/admin-settings.php:717
+msgid "Update all bot IP ranges now?"
+msgstr "Оновити всі IP ботів?"
+
+msgid "Return to Dashboard"
+msgstr "До Панелі Керування"
+
+msgid "Go to Settings"
+msgstr "Налаштування"
