@@ -137,3 +137,6 @@ Cloudflare, CCBot, Amazonbot, Applebot
 ---
 
 ## License
+
+GPL v3 or later  
+https://www.gnu.org/licenses/gpl-3.0.html
