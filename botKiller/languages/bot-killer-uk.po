@@ -354,10 +354,6 @@ msgstr "Спроба купити відсутній товар"
 msgid "This product is out of stock"
 msgstr "Товар відсутній"
 
-#: class-botkiller.php:2363
-msgid "auto-unblocked after"
-msgstr "розблоковано через"
-
 #: class-botkiller.php:2422
 msgid "# 2 same products in 5 seconds\n2,5,0\n\n# 3 same products in 5 minutes\n3,300,0\n\n# 2 different products in 5 seconds\n2,5,1"
 msgstr "# 2 однакових за 5с\n2,5,0\n\n# 3 однакових за 5хв\n3,300,0\n\n# 2 різних за 5с\n2,5,1"
@@ -405,22 +401,6 @@ msgstr "Списки IP та ASN збережено!"
 #: class-botkiller.php:2858 includes/views/admin-dashboard.php:13 includes/views/admin-settings.php:13
 msgid "You do not have sufficient permissions to access this page."
 msgstr "Недостатньо прав для доступу."
-
-#: class-botkiller.php:2876
-msgid "manually unblocked by admin"
-msgstr "розблоковано адміном"
-
-#: class-botkiller.php:2878
-msgid "ip %s unblocked!"
-msgstr "IP %s розблоковано!"
-
-#: class-botkiller.php:2888
-msgid "all auto-blocked ips manually cleared by admin"
-msgstr "усі автоматичні блокування очищено"
-
-#: class-botkiller.php:2890
-msgid "all auto-blocked ips unblocked!"
-msgstr "усі автоматичні IP розблоковано!"
 
 #: class-botkiller.php:2896
 msgid "LOG CLEARED"
