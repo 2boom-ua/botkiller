@@ -475,9 +475,9 @@ private function fetch_bing_ips($source = 'cron') {
     }
 
 private function get_cart_interacting_bot($ip, $user_agent) {
-    // ========== ПЕРЕВІРКА ЧИ IP ВЖЕ ЗАБЛОКОВАНИЙ ==========
+    // ========== CHECK IF IP IS ALREADY BLOCKED ==========
     if ($this->is_ip_blocked($ip)) {
-        return false; // IP вже в бану, не витрачаємо ресурси
+        return false; // IP already banned, don't waste resources
     }
     // =====================================================
     
@@ -942,17 +942,17 @@ private function get_cart_interacting_bot($ip, $user_agent) {
                     }
                 }
                 
-                // ========== ПЕРЕВІРКА НА JS/COOKIES ==========
+                // ========== CHECK FOR JS/COOKIES ==========
                 $has_js = get_transient('bot_killer_js_detected_' . md5($ip));
                 $has_cookies = !empty($_COOKIE);
                 
-                // Для strict ботів (крім Google) - JS/cookies = SPOOF
+                // For strict bots (except Google) - JS/cookies = SPOOF
                 if ($bot_data['type'] === 'strict' && empty($bot_data['allow_js']) && ($has_js || $has_cookies)) {
                     $risk = $bot_data['spoof_risk'] ?? 'medium';
                     $this->log_action($ip, "SPOOF ATTEMPT " . strtoupper($risk) . ": {$bot_name} with JS/cookies");
                     set_transient($cache_key, false, HOUR_IN_SECONDS);
                     
-                    // Блокуємо тільки для high ризику
+                    // Block only for high risk
                     if ($risk === 'high') {
                         $this->block_ip($ip, "SPOOF ATTEMPT HIGH: {$bot_name}");
                     }
@@ -974,7 +974,7 @@ private function get_cart_interacting_bot($ip, $user_agent) {
                     return false;
                 }
                 
-                // Для ботів без require_verification - просто логуємо
+                // For bots without require_verification - just log
                 $this->log_bot_detection($ip, $bot_name, $agent, 'user_agent_only');
                 set_transient($cache_key, $bot_name, 2 * HOUR_IN_SECONDS);
                 return $bot_name;
@@ -1693,7 +1693,7 @@ public function update_all_bot_ip_ranges($source = 'cron') {
 }
 
 private function unblock_ip($ip) {
-    // Видаляємо з файлу заблокованих IP
+    // Remove from blocked IP file
     if (file_exists($this->block_file)) {
         $blocked = file($this->block_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         if ($blocked !== false) {
@@ -1702,10 +1702,10 @@ private function unblock_ip($ip) {
         }
     }
     
-    // Видаляємо з мета-даних
+    // Remove from metadata
     $this->remove_block_meta($ip);
     
-    // Очищаємо кеш
+    // Clear cache
     wp_cache_delete('bot_killer_blocklist');
 }
 
@@ -1736,7 +1736,7 @@ public function update_tor_exit_nodes($source = 'cron') {
     }
 
     if (!empty($tor_ips)) {
-        set_transient('bot_killer_tor_nodes', $tor_ips, 12 * HOUR_IN_SECONDS); // 12 годин
+        set_transient('bot_killer_tor_nodes', $tor_ips, 12 * HOUR_IN_SECONDS); // 12 hours
         
         // Log based on source
         if ($source === 'manual') {
@@ -2126,14 +2126,14 @@ public function update_tor_exit_nodes($source = 'cron') {
         }
     }
 
-// Метод add_block_meta() - ЗБЕРІГАЄМО GEOIP
+// Method add_block_meta() - STORE GEOIP
 private function add_block_meta($ip, $reason) {
     $meta = $this->get_block_meta();
     $block_time = time();
     $unblock_hours = get_option('bot_killer_unblock_hours', 24);
     $unblock_time = $block_time + ($unblock_hours * 3600);
     
-    // ЦЕ ПОТРІБНО ЗАЛИШИТИ - GeoIP зберігається один раз при блокуванні
+    // THIS NEEDS TO REMAIN - GeoIP is stored once when blocking
     $geo = $this->get_geo_location($ip);
     
     $meta[$ip] = [
@@ -2142,7 +2142,7 @@ private function add_block_meta($ip, $reason) {
         'unblock_at' => $unblock_time, 
         'unblock_at_readable' => date('Y-m-d H:i:s', $unblock_time), 
         'reason' => $reason, 
-        'geo' => $geo  // ← GeoIP зберігається в meta
+        'geo' => $geo  // ← GeoIP is stored in meta
     ];
     
     $this->save_block_meta($meta);
@@ -2258,12 +2258,12 @@ private function add_block_meta($ip, $reason) {
     }
 
 private function is_ip_blocked($ip) {
-    // ========== ПЕРЕВІРКА ЧИ IP ВЖЕ БЛОКУЄТЬСЯ ==========
+    // ========== CHECK IF IP IS CURRENTLY BEING BLOCKED ==========
     $blocking_key = 'bot_killer_blocking_' . md5($ip);
     if (get_transient($blocking_key)) {
-        return true; // Вважаємо заблокованим, поки йде запис
+        return true; // Consider blocked while blocking is in progress
     }
-    // =====================================================
+    // =============================================================
     
     if ($this->is_ip_in_custom_whitelist($ip)) return false;
     
@@ -2298,7 +2298,7 @@ private function is_ip_blocked($ip) {
     }
 
 private function block_ip($ip, $reason) {
-    // ========== ПЕРЕВІРКА ЧИ IP ВЖЕ БЛОКУЄТЬСЯ ==========
+    // ========== CHECK IF IP IS CURRENTLY BEING BLOCKED ==========
     $blocking_key = 'bot_killer_blocking_' . md5($ip);
     
     // Atomic check-and-set
@@ -2307,12 +2307,12 @@ private function block_ip($ip, $reason) {
     }
     
     if (get_transient($blocking_key)) {
-        return; // IP вже в процесі блокування, пропускаємо
+        return; // IP already in blocking process, skip
     }
-    set_transient($blocking_key, true, 3); // 3 секунди
-    // =====================================================
+    set_transient($blocking_key, true, 3); // 3 seconds
+    // =============================================================
     
-    // Перевірка whitelist
+    // Check whitelist
     if ($this->is_ip_in_custom_whitelist($ip)) {
         $this->log_action($ip, __("whitelisted ip - not blocked", 'bot-killer'));
         return;
@@ -2354,7 +2354,7 @@ private function log_action($ip, $message) {
     $geo = null;
     $location = '';
     
-    // Якщо IP в блоклисті - використовуємо збережені дані, не робимо новий запит
+    // If IP is in blocklist - use saved data, don't make new request
     if ($this->is_ip_blocked($ip) || $this->is_ip_in_custom_blocklist($ip)) {
         $meta = $this->get_block_meta();
         if (isset($meta[$ip]) && isset($meta[$ip]['geo'])) {
@@ -2363,7 +2363,7 @@ private function log_action($ip, $message) {
             $location = $this->is_ip_in_custom_blocklist($ip) ? ' [custom blocklist]' : ' [auto-blocked]';
         }
     } else {
-        // Тільки для НЕзаблокованих IP робимо новий GeoIP запит
+        // Only for NON-blocked IPs make new GeoIP request
         $geo = $this->get_geo_location($ip);
     }
     
@@ -2442,7 +2442,7 @@ private function log_action($ip, $message) {
     }
     
 private function check_browser_integrity($ip) {
-    // Googlebot пропускаємо (має PageRenderer)
+    // Skip Googlebot (has PageRenderer)
     $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
     if (strpos($user_agent, 'Googlebot') !== false || 
         strpos($user_agent, 'Google-PageRenderer') !== false) {
@@ -2483,7 +2483,7 @@ private function check_browser_integrity($ip) {
 }
 
 private function is_headless_browser($user_agent) {
-    // Google PageRenderer не блокуємо
+    // Don't block Google PageRenderer
     if (strpos($user_agent, 'Google-PageRenderer') !== false) {
         return false;
     }
@@ -3253,7 +3253,7 @@ public function track_and_block($passed, $product_id, $quantity) {
 // PRIORITY 4: BROWSER CHECKS - For non-bot traffic
 // =============================================
 
-// 4a. HEADLESS DETECTION (тепер перший)
+// 4a. HEADLESS DETECTION (now first)
 if (get_option('bot_killer_block_headless', 1)) {
     if ($this->is_headless_browser($user_agent)) {
         $this->log_action($ip, "Headless browser detected - " . $user_agent);
@@ -3262,7 +3262,7 @@ if (get_option('bot_killer_block_headless', 1)) {
     }
 }
 
-// 4b. BROWSER INTEGRITY (тепер другий)
+// 4b. BROWSER INTEGRITY (now second)
 if (!$this->check_browser_integrity($ip)) {
     $this->block_ip($ip, "No JS/cookies/referer");
     wc_add_notice(__('Your browser is not fully supported. Please enable JavaScript and cookies.', 'bot-killer'), 'error');
@@ -3273,7 +3273,7 @@ if (!$this->check_browser_integrity($ip)) {
 // PRIORITY 5: GEO CHECKS - For non-bot traffic
 // =============================================
 
-// 5a. COUNTRY FILTER - тільки якщо IP не в custom block list
+// 5a. COUNTRY FILTER - only if IP is not in custom block list
 $allowed_countries = get_option('bot_killer_allowed_countries', array());
 $block_unknown = get_option('bot_killer_block_unknown_country', 0);
 
