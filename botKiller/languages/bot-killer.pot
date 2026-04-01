@@ -1,1127 +1,675 @@
-# Bot Killer Plugin - POT file
-# Copyright (C) 2026
-# This file is distributed under the same license as the Bot Killer plugin.
 msgid ""
 msgstr ""
 "Project-Id-Version: Bot Killer\n"
-"POT-Creation-Date: 2026-03-19 12:00+0200\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"POT-Creation-Date: 2026-04-01\n"
+"PO-Revision-Date: 2026-04-01\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: class-botkiller.php:119
-msgid "Auto-whitelisted server IP"
-msgstr ""
-
-#: class-botkiller.php:181
-msgid "Using fallback Cloudflare IPs - fetch failed"
-msgstr ""
-
-#: class-botkiller.php:193
-msgid "Cloudflare IPs manually updated: %d IPv4, %d IPv6 ranges"
-msgstr ""
-
-#: class-botkiller.php:196
-msgid "Cloudflare IPs updated via cron: %d IPv4, %d IPv6 ranges"
-msgstr ""
-
-#: class-botkiller.php:218
-msgid "Invalid security token. Please refresh the page and try again."
-msgstr ""
-
-#: class-botkiller.php:222
-msgid "You do not have permission to perform this action."
-msgstr ""
-
-#: class-botkiller.php:231
-msgid "Cloudflare IPs updated! %d IPv4, %d IPv6 ranges"
-msgstr ""
-
-#: class-botkiller.php:234
-msgid "Failed to update Cloudflare IPs. Check error log for details."
-msgstr ""
-
-#: class-botkiller.php:239
-msgid "Invalid security token. Please refresh the page and try again."
-msgstr ""
-
-#: class-botkiller.php:243
-msgid "You do not have permission to perform this action."
-msgstr ""
-
-#: class-botkiller.php:260
-msgid "Invalid security token. Please refresh the page and try again."
-msgstr ""
-
-#: class-botkiller.php:264
-msgid "You do not have permission to perform this action."
-msgstr ""
-
-#: class-botkiller.php:275
-msgid "Google/Bing IPs updated! (Google: %d, Bing: %d)"
-msgstr ""
-
-#: class-botkiller.php:291
-msgid "All bot IP ranges updated successfully!"
-msgstr ""
-
-#: class-botkiller.php:335
-msgid "Google IP ranges manually updated: %d ranges"
-msgstr ""
-
-#: class-botkiller.php:338
-msgid "Google IP ranges updated via cron: %d ranges"
-msgstr ""
-
-#: class-botkiller.php:341
-msgid "Google IP ranges update failed - using fallback"
-msgstr ""
-
-#: class-botkiller.php:377
-msgid "Bing IP ranges manually updated: %d ranges"
-msgstr ""
-
-#: class-botkiller.php:380
-msgid "Bing IP ranges updated via cron: %d ranges"
-msgstr ""
-
-#: class-botkiller.php:383
-msgid "Bing IP ranges update failed - using fallback"
-msgstr ""
-
-#: class-botkiller.php:437
-msgid "Google bot — requires googlebot.com domain or Google IP"
-msgstr ""
-
-#: class-botkiller.php:447
-msgid "Bing bot — requires search.msn.com domain or Microsoft IP"
-msgstr ""
-
-#: class-botkiller.php:456
-msgid "Baidu bot — requires official IP ranges"
-msgstr ""
-
-#: class-botkiller.php:466
-msgid "Yandex bot — requires DNS or IP verification"
-msgstr ""
-
-#: class-botkiller.php:474
-msgid "DuckDuckGo bot — requires official IP ranges"
-msgstr ""
-
-#: class-botkiller.php:481
-msgid "Seznam search crawler"
-msgstr ""
-
-#: class-botkiller.php:488
-msgid "Huawei Petal search crawler"
-msgstr ""
-
-#: class-botkiller.php:499
-msgid "Facebook bot — requires AS32934 or AS63293"
-msgstr ""
-
-#: class-botkiller.php:507
-msgid "WhatsApp link preview bot"
-msgstr ""
-
-#: class-botkiller.php:515
-msgid "LinkedIn bot — requires AS14413"
-msgstr ""
-
-#: class-botkiller.php:523
-msgid "Pinterest bot — requires official IP ranges"
-msgstr ""
-
-#: class-botkiller.php:531
-msgid "Twitter bot — requires AS13414"
-msgstr ""
-
-#: class-botkiller.php:539
-msgid "Discord bot — requires official IP ranges"
-msgstr ""
-
-#: class-botkiller.php:547
-msgid "Slack bot — requires official IP ranges"
-msgstr ""
-
-#: class-botkiller.php:555
-msgid "Telegram bot — requires official IP ranges"
-msgstr ""
-
-#: class-botkiller.php:563
-msgid "Microsoft link preview bots"
-msgstr ""
-
-#: class-botkiller.php:574
-msgid "OpenAI bot — requires official IP ranges"
-msgstr ""
-
-#: class-botkiller.php:583
-msgid "Claude bot — requires official IP ranges"
-msgstr ""
-
-#: class-botkiller.php:592
-msgid "Perplexity bot — requires official IP ranges"
-msgstr ""
-
-#: class-botkiller.php:600
-msgid "Gemini bot — requires Google IP ranges"
-msgstr ""
-
-#: class-botkiller.php:610
-msgid "Google AI crawler (Google-Extended, Vertex AI)"
-msgstr ""
-
-#: class-botkiller.php:619
-msgid "Bytespider — requires ByteDance ASNs"
-msgstr ""
-
-#: class-botkiller.php:627
-msgid "TikTok crawler"
-msgstr ""
-
-#: class-botkiller.php:636
-msgid "Mistral AI — requires AS212949 or official IP"
-msgstr ""
-
-#: class-botkiller.php:645
-msgid "Grok — requires x.ai or grok.com domain"
-msgstr ""
-
-#: class-botkiller.php:652
-msgid "DeepSeek AI"
-msgstr ""
-
-#: class-botkiller.php:660
-msgid "Alibaba Qwen AI — requires AS37963"
-msgstr ""
-
-#: class-botkiller.php:668
-msgid "Meta AI crawler"
-msgstr ""
-
-#: class-botkiller.php:679
-msgid "Ahrefs crawler — requires official IP ranges"
-msgstr ""
-
-#: class-botkiller.php:688
-msgid "Semrush crawler — requires official IP ranges"
-msgstr ""
-
-#: class-botkiller.php:696
-msgid "Majestic crawler"
-msgstr ""
-
-#: class-botkiller.php:704
-msgid "Moz crawler"
-msgstr ""
-
-#: class-botkiller.php:715
-msgid "Cloudflare bot — requires AS13335"
-msgstr ""
-
-#: class-botkiller.php:724
-msgid "CCBot — requires crawl.commoncrawl.org domain"
-msgstr ""
-
-#: class-botkiller.php:733
-msgid "Amazonbot — requires crawl.amazonbot.amazon domain"
-msgstr ""
-
-#: class-botkiller.php:742
-msgid "Applebot — requires applebot.apple.com domain"
-msgstr ""
-
-#: class-botkiller.php:751
-msgid "YouBot AI search crawler"
-msgstr ""
-
-#: class-botkiller.php:993
-msgid "Google IP ranges manually updated: %d ranges"
-msgstr ""
-
-#: class-botkiller.php:996
-msgid "Google IP ranges updated via cron: %d ranges"
-msgstr ""
-
-#: class-botkiller.php:999
-msgid "Google IP ranges update failed - using fallback"
-msgstr ""
-
-#: class-botkiller.php:1026
-msgid "Bing IP ranges manually updated: %d ranges"
-msgstr ""
-
-#: class-botkiller.php:1029
-msgid "Bing IP ranges updated via cron: %d ranges"
-msgstr ""
-
-#: class-botkiller.php:1032
-msgid "Bing IP ranges update failed - using fallback"
-msgstr ""
-
-#: class-botkiller.php:1406
-msgid "Starting manual update of all bot IP ranges..."
-msgstr ""
-
-#: class-botkiller.php:1408
-msgid "Starting weekly update of all bot IP ranges..."
-msgstr ""
-
-#: class-botkiller.php:1442
-msgid "Manual update of all bot IP ranges completed."
-msgstr ""
-
-#: class-botkiller.php:1444
-msgid "Weekly update of all bot IP ranges completed."
-msgstr ""
-
-#: class-botkiller.php:1684
-msgid "invalid"
-msgstr ""
-
-#: class-botkiller.php:1684
-msgid "Price"
-msgstr ""
-
-#: class-botkiller.php:1698
-msgid "whitelisted ip - not blocked"
-msgstr ""
-
-#: class-botkiller.php:1715
-msgid "ip blocked"
-msgstr ""
-
-#: class-botkiller.php:1717
-msgid "auto-unblock in %s hours"
-msgstr ""
-
-#: class-botkiller.php:1784
-msgid "unknown"
-msgstr ""
-
-#: class-botkiller.php:1799
-msgid "access attempt blocked"
-msgstr ""
-
-#: class-botkiller.php:1802
-msgid "Access Denied - IP Blocked"
-msgstr ""
-
-#: class-botkiller.php:1805
-msgid "Access Denied - Your IP has been blocked due to suspicious activity."
-msgstr ""
-
-#: class-botkiller.php:1805
-msgid "Blocked"
-msgstr ""
-
-#: class-botkiller.php:1817
-msgid "JavaScript, cookies, and referer headers are required for this site."
-msgstr ""
-
-#: class-botkiller.php:1817
-msgid "Continue (not recommended)"
-msgstr ""
-
-#: class-botkiller.php:1912
-msgid "Invalid security token"
-msgstr ""
-
-#: class-botkiller.php:1917
-msgid "Rate limit exceeded"
-msgstr ""
-
-#: class-botkiller.php:1943
-msgid "Invalid product"
-msgstr ""
-
-#: class-botkiller.php:1981
-msgid "custom rule (%s): %d %s in %ds (actual: %d in %s)"
-msgstr ""
-
-#: class-botkiller.php:1987
-msgid "Access Denied - Too many attempts"
-msgstr ""
-
-#: class-botkiller.php:2001
-msgid "Invalid product"
-msgstr ""
-
-#: class-botkiller.php:2018
-msgid "whitelisted ip - activity allowed"
-msgstr ""
-
-#: class-botkiller.php:2023
-msgid "Access Denied - IP Blocked"
-msgstr ""
-
-#: class-botkiller.php:2184
-msgid "blocked by custom blocklist"
-msgstr ""
-
-#: class-botkiller.php:2189
-msgid "Access Denied - IP Blocked"
-msgstr ""
-
-#: class-botkiller.php:2196
-msgid "Access Denied - Anonymizer detected"
-msgstr ""
-
-#: class-botkiller.php:2205
-msgid "Access Denied - Network blocked"
-msgstr ""
-
-#: class-botkiller.php:2216
-msgid "Access Denied - Automated browser detected"
-msgstr ""
-
-#: class-botkiller.php:2223
-msgid "Your browser is not fully supported. Please enable JavaScript and cookies."
-msgstr ""
-
-#: class-botkiller.php:2240
-msgid "blocked - country %s not allowed"
-msgstr ""
-
-#: class-botkiller.php:2241
-msgid "Purchases are only available from selected countries"
-msgstr ""
-
-#: class-botkiller.php:2245
-msgid "blocked - unknown country"
-msgstr ""
-
-#: class-botkiller.php:2246
-msgid "Unable to verify your location"
-msgstr ""
-
-#: class-botkiller.php:2254
-msgid "Attempt to add out-of-stock product"
-msgstr ""
-
-#: class-botkiller.php:2255
-msgid "This product is out of stock"
-msgstr ""
-
-#: class-botkiller.php:2363
-msgid "auto-unblocked after"
-msgstr ""
-
-#: class-botkiller.php:2363
-msgid "hours"
-msgstr ""
-
-#: class-botkiller.php:2422
-msgid "# 2 same products in 5 seconds\n2,5,0\n\n# 3 same products in 5 minutes\n3,300,0\n\n# 2 different products in 5 seconds\n2,5,1"
-msgstr ""
-
-#: class-botkiller.php:2515
-msgid "Bot Killer: Could not fetch search engine IP ranges. Using fallback lists which may be outdated."
-msgstr ""
-
-#: class-botkiller.php:2519
-msgid "Bot Killer: Cloudflare IPs not loaded. Proxy detection may not work correctly until cron updates them."
-msgstr ""
-
-#: class-botkiller.php:2523
-msgid "Bot Killer: Upload directory is not writable. Please check permissions."
-msgstr ""
-
-#: class-botkiller.php:2526
-msgid "Bot Killer: IP addresses are logged for security purposes. External API calls are made to ip-api.com (GeoIP) and Cloudflare (IP ranges)."
-msgstr ""
-
-#: class-botkiller.php:2531
-msgid "Bot Killer"
-msgstr ""
-
-#: class-botkiller.php:2539
-msgid "Settings"
-msgstr ""
-
-#: class-botkiller.php:2576
-msgid "Blocklist saved successfully! %d entries stored."
-msgstr ""
-
-#: class-botkiller.php:2619
-msgid "Whitelist saved successfully! %d entries stored."
-msgstr ""
-
-#: class-botkiller.php:2668
-msgid "ASN list saved successfully! %d ASNs stored."
-msgstr ""
-
-#: class-botkiller.php:2744
-msgid "IP lists and ASN list saved successfully!"
-msgstr ""
-
-#: class-botkiller.php:2858
-msgid "You do not have sufficient permissions to access this page."
-msgstr ""
-
-#: class-botkiller.php:2876
-msgid "manually unblocked by admin"
-msgstr ""
-
-#: class-botkiller.php:2878
-msgid "ip %s unblocked!"
-msgstr ""
-
-#: class-botkiller.php:2888
-msgid "all auto-blocked ips manually cleared by admin"
-msgstr ""
-
-#: class-botkiller.php:2890
-msgid "all auto-blocked ips unblocked!"
-msgstr ""
-
-#: class-botkiller.php:2896
-msgid "LOG CLEARED"
-msgstr ""
-
-#: class-botkiller.php:2899
-msgid "log cleared!"
-msgstr ""
-
-#: includes/views/admin-dashboard.php:18
 msgid "Bot Killer Dashboard"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:151
-msgid "Auto-blocked IPs"
+msgid "Export CSV"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:154
 msgid "Refresh IP List"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:159
 msgid "Remove all auto-blocks? This action cannot be undone."
 msgstr ""
 
-#: includes/views/admin-dashboard.php:160
 msgid "Unblock All IP"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:169
 msgid "IP Address"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:170
 msgid "Location"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:171
 msgid "Blocked"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:172
 msgid "Unblocks In"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:173
 msgid "Action"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:187
 msgid "unknown"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:194
-msgid "unknown"
-msgstr ""
-
-#: includes/views/admin-dashboard.php:205
 msgid "expiring soon"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:208
 msgid "expired"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:210
 msgid "permanent"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:218
-msgid "Unblock this IP?"
-msgstr ""
-
-#: includes/views/admin-dashboard.php:219
 msgid "Unblock"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:231
 msgid "total blocked"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:232
 msgid "auto-unblock"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:238
 msgid "expiring in < 1h"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:243
-msgid "permanent"
-msgstr ""
-
-#: includes/views/admin-dashboard.php:246
 msgid "Timezone:"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:256
+msgid "DST: auto"
+msgstr ""
+
 msgid "No auto-blocked IPs yet"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:257
 msgid "When bots are detected, they will appear here"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:266
 msgid "Active Rules"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:268
 msgid "Go to Settings"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:276
 msgid "Whitelist"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:277
 msgid "IP ranges bypass all rules"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:284
 msgid "Blocklist"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:285
 msgid "IP ranges manually blocked"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:292
 msgid "ASN Blocklist"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:299
 msgid "networks blocked"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:306
+msgid "UA Rotation Detection"
+msgstr ""
+
+msgid "%d different UAs in %d seconds"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
 msgid "Auto-blocked IPs"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:307
 msgid "IPs automatically blocked"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:314
 msgid "Country Filter"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:319
 msgid "countries allowed:"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:320
 msgid "block unknown"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:322
 msgid "All countries allowed"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:331
 msgid "Tor Exit Node"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:337
 msgid "nodes blocked"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:345
 msgid "Out of Stock Blocker"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:346
 msgid "Block out-of-stock attempts"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:353
 msgid "Headless Detection"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:354
 msgid "Blocks headless browsers"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:361
-msgid "Browser Integrity"
-msgstr ""
-
-#: includes/views/admin-dashboard.php:362
 msgid "JS, Cookies, Referer check"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:369
 msgid "Custom Rules"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:370
 msgid "User-defined blocking rules"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:381
 msgid "Add-to-Cart Bots"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:383
-msgid "Google, Bing, Facebook, OpenAI, Anthropic, Telegram, Gemini, Perplexity, Baidu, Yandex, DuckDuckGo, LinkedIn, Pinterest, Twitter, Discord, Slack, CCBot, Amazonbot, Applebot, Bytespider, YouBot, Ahrefs, Semrush, MJ12, DotBot, Meta AI, TikTok, Seznam, PetalBot, WhatsApp, Mistral, Grok, DeepSeek, Qwen"
+msgid "Web bots & AI agents"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:390
 msgid "Priority Order:"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:393
-msgid "Whitelist"
-msgstr ""
-
-#: includes/views/admin-dashboard.php:394
 msgid "Custom Blocklist"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:395
 msgid "Auto-blocked"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:396
-msgid "Add-to-Cart Bots"
+msgid "UA Rotation"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:399
-msgid "Tor Exit Node"
-msgstr ""
-
-#: includes/views/admin-dashboard.php:400
 msgid "ASN Block"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:401
-msgid "Headless Detection"
-msgstr ""
-
-#: includes/views/admin-dashboard.php:402
-msgid "Browser Integrity"
-msgstr ""
-
-#: includes/views/admin-dashboard.php:405
-msgid "Country Filter"
-msgstr ""
-
-#: includes/views/admin-dashboard.php:406
-msgid "Out of Stock"
-msgstr ""
-
-#: includes/views/admin-dashboard.php:407
-msgid "Custom Rules"
-msgstr ""
-
-#: includes/views/admin-dashboard.php:418
 msgid "Live Log"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:420
+msgid "Debug Mode:"
+msgstr ""
+
+msgid "Show:"
+msgstr ""
+
 msgid "Refresh Log"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:422
 msgid "Empty Log"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:579
 msgid "No log entries yet"
 msgstr ""
 
-#: includes/views/admin-dashboard.php:587
-msgid "timestamps in GMT%s | total displayed: %d | Geo data: [country code - city]"
+msgid "timestamps in GMT%s (DST: auto) | total displayed: %d | Geo data: [country code - city]"
 msgstr ""
 
-#: includes/views/admin-settings.php:18
 msgid "BotKiller Settings"
 msgstr ""
 
-#: includes/views/admin-settings.php:22
 msgid "Return to Dashboard"
 msgstr ""
 
-#: includes/views/admin-settings.php:169
-msgid "Blocklist"
-msgstr ""
-
-#: includes/views/admin-settings.php:173
-msgid "Active Blocks"
-msgstr ""
-
-#: includes/views/admin-settings.php:176
-msgid "IP ranges"
-msgstr ""
-
-#: includes/views/admin-settings.php:181
-msgid "Single IP, CIDR, range, or IPv6. Use # for comments."
-msgstr ""
-
-#: includes/views/admin-settings.php:185
-msgid "Last saved:"
-msgstr ""
-
-#: includes/views/admin-settings.php:191
-msgid "Never"
-msgstr ""
-
-#: includes/views/admin-settings.php:193
-msgid "ago"
-msgstr ""
-
-#: includes/views/admin-settings.php:194
-msgid "Save Blocklist"
-msgstr ""
-
-#: includes/views/admin-settings.php:204
-msgid "Whitelist"
-msgstr ""
-
-#: includes/views/admin-settings.php:208
-msgid "Whitelisted"
-msgstr ""
-
-#: includes/views/admin-settings.php:211
-msgid "IP ranges"
-msgstr ""
-
-#: includes/views/admin-settings.php:216
-msgid "IPs that bypass all blocking rules. Use # for comments."
-msgstr ""
-
-#: includes/views/admin-settings.php:220
-msgid "Last saved:"
-msgstr ""
-
-#: includes/views/admin-settings.php:226
-msgid "Never"
-msgstr ""
-
-#: includes/views/admin-settings.php:228
-msgid "ago"
-msgstr ""
-
-#: includes/views/admin-settings.php:229
-msgid "Save Whitelist"
-msgstr ""
-
-#: includes/views/admin-settings.php:239
-msgid "ASN Blocklist"
-msgstr ""
-
-#: includes/views/admin-settings.php:243
-msgid "Blocked ASNs"
-msgstr ""
-
-#: includes/views/admin-settings.php:258
-msgid "networks"
-msgstr ""
-
-#: includes/views/admin-settings.php:262
-msgid "ASN numbers (13335, 16509). Use # for comments."
-msgstr ""
-
-#: includes/views/admin-settings.php:266
-msgid "Last saved:"
-msgstr ""
-
-#: includes/views/admin-settings.php:272
-msgid "Never"
-msgstr ""
-
-#: includes/views/admin-settings.php:274
-msgid "ago"
-msgstr ""
-
-#: includes/views/admin-settings.php:275
-msgid "Save ASN List"
-msgstr ""
-
-#: includes/views/admin-settings.php:286
 msgid "Bot, Search Engines and Cloudflare"
 msgstr ""
 
-#: includes/views/admin-settings.php:290
 msgid "Bot Types"
 msgstr ""
 
-#: includes/views/admin-settings.php:293
 msgid "supported"
 msgstr ""
 
-#: includes/views/admin-settings.php:297
 msgid "Update Frequency"
 msgstr ""
 
-#: includes/views/admin-settings.php:299
 msgid "Weekly"
 msgstr ""
 
-#: includes/views/admin-settings.php:300
 msgid "via cron"
 msgstr ""
 
-#: includes/views/admin-settings.php:304
 msgid "Cache Duration"
 msgstr ""
 
-#: includes/views/admin-settings.php:306
 msgid "IP addresses"
 msgstr ""
 
-#: includes/views/admin-settings.php:325
+msgid "IP ranges"
+msgstr ""
+
 msgid "All IP ranges are automatically updated weekly via cron."
 msgstr ""
 
-#: includes/views/admin-settings.php:329
 msgid "Last update:"
 msgstr ""
 
-#: includes/views/admin-settings.php:335
-msgid "Never"
-msgstr ""
-
-#: includes/views/admin-settings.php:337
-msgid "ago"
-msgstr ""
-
-#: includes/views/admin-settings.php:338
 msgid "Update All IP Ranges"
 msgstr ""
 
-#: includes/views/admin-settings.php:346
 msgid "Tor Exit Nodes"
 msgstr ""
 
-#: includes/views/admin-settings.php:350
 msgid "Active Nodes"
 msgstr ""
 
-#: includes/views/admin-settings.php:354
-msgid "IP addresses"
-msgstr ""
-
-#: includes/views/admin-settings.php:358
-msgid "Update Frequency"
-msgstr ""
-
-#: includes/views/admin-settings.php:360
-msgid "via cron"
-msgstr ""
-
-#: includes/views/admin-settings.php:365
 msgid "Block Tor exit nodes"
 msgstr ""
 
-#: includes/views/admin-settings.php:370
 msgid "Blocks visitors using Tor anonymizer network. Updated every 12 hours."
 msgstr ""
 
-#: includes/views/admin-settings.php:374
-msgid "Last update:"
-msgstr ""
-
-#: includes/views/admin-settings.php:382
-msgid "Never"
-msgstr ""
-
-#: includes/views/admin-settings.php:384
-msgid "ago"
-msgstr ""
-
-#: includes/views/admin-settings.php:386
 msgid "Update Tor Nodes"
 msgstr ""
 
-#: includes/views/admin-settings.php:392
-msgid "Browser Integrity"
-msgstr ""
-
-#: includes/views/admin-settings.php:394
-msgid "Out of Stock Blocker"
-msgstr ""
-
-#: includes/views/admin-settings.php:397
-msgid "Block missing JS/cookies/referer"
-msgstr ""
-
-#: includes/views/admin-settings.php:403
-msgid "Block headless browsers"
-msgstr ""
-
-#: includes/views/admin-settings.php:408
-msgid "Blocks bots missing JavaScript, cookies, or referer headers."
-msgstr ""
-
-#: includes/views/admin-settings.php:416
-msgid "Block out of stock attempts"
-msgstr ""
-
-#: includes/views/admin-settings.php:421
-msgid "When a visitor tries to add an out-of-stock product to cart, their IP is immediately blocked."
-msgstr ""
-
-#: includes/views/admin-settings.php:432
 msgid "Country Access Control"
 msgstr ""
 
-#: includes/views/admin-settings.php:436
 msgid "Allowed Countries"
 msgstr ""
 
-#: includes/views/admin-settings.php:440
 msgid "selected"
 msgstr ""
 
-#: includes/views/admin-settings.php:444
 msgid "Block unknown countries"
 msgstr ""
 
-#: includes/views/admin-settings.php:450
 msgid "Allow add-to-cart only from:"
 msgstr ""
 
-#: includes/views/admin-settings.php:524
+msgid "United Kingdom"
+msgstr ""
+
+msgid "Ireland"
+msgstr ""
+
+msgid "Netherlands"
+msgstr ""
+
+msgid "Belgium"
+msgstr ""
+
+msgid "Luxembourg"
+msgstr ""
+
+msgid "France"
+msgstr ""
+
+msgid "Monaco"
+msgstr ""
+
+msgid "Germany"
+msgstr ""
+
+msgid "Austria"
+msgstr ""
+
+msgid "Switzerland"
+msgstr ""
+
+msgid "Liechtenstein"
+msgstr ""
+
+msgid "Poland"
+msgstr ""
+
+msgid "Czech Republic"
+msgstr ""
+
+msgid "Slovakia"
+msgstr ""
+
+msgid "Hungary"
+msgstr ""
+
+msgid "Slovenia"
+msgstr ""
+
+msgid "Estonia"
+msgstr ""
+
+msgid "Latvia"
+msgstr ""
+
+msgid "Lithuania"
+msgstr ""
+
+msgid "Belarus"
+msgstr ""
+
+msgid "Ukraine"
+msgstr ""
+
+msgid "Moldova"
+msgstr ""
+
+msgid "Georgia"
+msgstr ""
+
+msgid "Armenia"
+msgstr ""
+
+msgid "Azerbaijan"
+msgstr ""
+
+msgid "Portugal"
+msgstr ""
+
+msgid "Spain"
+msgstr ""
+
+msgid "Italy"
+msgstr ""
+
+msgid "Malta"
+msgstr ""
+
+msgid "Greece"
+msgstr ""
+
+msgid "Cyprus"
+msgstr ""
+
+msgid "Croatia"
+msgstr ""
+
+msgid "Bosnia and Herzegovina"
+msgstr ""
+
+msgid "Serbia"
+msgstr ""
+
+msgid "Montenegro"
+msgstr ""
+
+msgid "North Macedonia"
+msgstr ""
+
+msgid "Albania"
+msgstr ""
+
+msgid "Bulgaria"
+msgstr ""
+
+msgid "Romania"
+msgstr ""
+
+msgid "Turkey"
+msgstr ""
+
+msgid "Denmark"
+msgstr ""
+
+msgid "Finland"
+msgstr ""
+
+msgid "Iceland"
+msgstr ""
+
+msgid "Norway"
+msgstr ""
+
+msgid "Sweden"
+msgstr ""
+
+msgid "Canada"
+msgstr ""
+
+msgid "United States"
+msgstr ""
+
+msgid "Mexico"
+msgstr ""
+
+msgid "Brazil"
+msgstr ""
+
+msgid "Argentina"
+msgstr ""
+
+msgid "Chile"
+msgstr ""
+
+msgid "Israel"
+msgstr ""
+
+msgid "United Arab Emirates"
+msgstr ""
+
+msgid "Japan"
+msgstr ""
+
+msgid "China"
+msgstr ""
+
+msgid "India"
+msgstr ""
+
+msgid "South Korea"
+msgstr ""
+
+msgid "South Africa"
+msgstr ""
+
+msgid "Nigeria"
+msgstr ""
+
+msgid "Egypt"
+msgstr ""
+
+msgid "Australia"
+msgstr ""
+
+msgid "New Zealand"
+msgstr ""
+
 msgid "Hold Ctrl/Cmd to select multiple. Leave empty to allow all."
 msgstr ""
 
-#: includes/views/admin-settings.php:533
 msgid "GeoIP Service"
 msgstr ""
 
-#: includes/views/admin-settings.php:537
-msgid "Cache Duration"
-msgstr ""
-
-#: includes/views/admin-settings.php:540
 msgid "cached"
 msgstr ""
 
-#: includes/views/admin-settings.php:544
 msgid "Primary Service"
 msgstr ""
 
-#: includes/views/admin-settings.php:550
-msgid "Cache Duration"
+msgid "Clear GeoIP Cache"
 msgstr ""
 
-#: includes/views/admin-settings.php:560
+msgid "Clear Cache"
+msgstr ""
+
 msgid "Geolocation provider, cache time, and fallback settings."
 msgstr ""
 
-#: includes/views/admin-settings.php:564
 msgid "Enable fallback"
 msgstr ""
 
-#: includes/views/admin-settings.php:570
-msgid "Custom Rules"
-msgstr ""
-
-#: includes/views/admin-settings.php:574
-msgid "Active Rules"
-msgstr ""
-
-#: includes/views/admin-settings.php:584
-msgid "Enable Custom Rules"
-msgstr ""
-
-#: includes/views/admin-settings.php:592
-msgid "Format: attempts,seconds,type (0=same, 1=different, 2=any). Use # for comments."
-msgstr ""
-
-#: includes/views/admin-settings.php:598
-msgid "Save your custom rules"
-msgstr ""
-
-#: includes/views/admin-settings.php:600
-msgid "Save All Rules"
-msgstr ""
-
-#: includes/views/admin-settings.php:609
 msgid "System Settings"
 msgstr ""
 
-#: includes/views/admin-settings.php:614
 msgid "Auto-unblock"
 msgstr ""
 
-#: includes/views/admin-settings.php:617
 msgid "after block"
 msgstr ""
 
-#: includes/views/admin-settings.php:621
 msgid "Max Log Size"
 msgstr ""
 
-#: includes/views/admin-settings.php:624
 msgid "before rotation"
 msgstr ""
 
-#: includes/views/admin-settings.php:630
 msgid "Auto-unblock after"
 msgstr ""
 
-#: includes/views/admin-settings.php:639
 msgid "hours"
 msgstr ""
 
-#: includes/views/admin-settings.php:645
 msgid "Max log size"
 msgstr ""
 
-#: includes/views/admin-settings.php:655
 msgid "Time zone (GMT)"
 msgstr ""
 
-#: includes/views/admin-settings.php:670
-msgid "Configure auto-unblock time, log rotation, and timezone."
+msgid "Configure auto-unblock time, log rotation, and timezone. Daylight saving time is handled automatically."
 msgstr ""
 
-#: includes/views/admin-settings.php:678
-msgid "Return to Dashboard"
+msgid "User-Agent Rotation"
 msgstr ""
 
-#: includes/views/admin-settings.php:679
+msgid "Block missing JS/cookies/referer"
+msgstr ""
+
+msgid "Block headless browsers"
+msgstr ""
+
+msgid "Blocks bots missing JavaScript, cookies, or referer headers."
+msgstr ""
+
+msgid "Enable UA rotation detection"
+msgstr ""
+
+msgid "Max different UAs"
+msgstr ""
+
+msgid "different UAs"
+msgstr ""
+
+msgid "Time window"
+msgstr ""
+
+msgid "seconds"
+msgstr ""
+
+msgid "Blocks IP if it uses more than X different User-Agents within Y seconds. Helps detect bots that rotate UA to avoid detection."
+msgstr ""
+
+msgid "How it works"
+msgstr ""
+
+msgid "Detects bots that rotate User-Agent strings to avoid detection."
+msgstr ""
+
+msgid "Example:"
+msgstr ""
+
+msgid "If an IP uses 3 different User-Agents within 5 seconds → blocked."
+msgstr ""
+
+msgid "When a visitor tries to add an out-of-stock product to cart, their IP is immediately blocked."
+msgstr ""
+
+msgid "Cart Add Rules"
+msgstr ""
+
+msgid "Enable Cart Add Rules"
+msgstr ""
+
+msgid "Format: attempts,seconds,type (0=same product, 1=different products, 2=any adds). Use # for comments."
+msgstr ""
+
+msgid "Rule examples:"
+msgstr ""
+
+msgid "Blocks IP after 2 adds of the SAME product within 5 seconds"
+msgstr ""
+
+msgid "Blocks IP after 3 adds of the SAME product within 5 minutes"
+msgstr ""
+
+msgid "Blocks IP after 2 adds of DIFFERENT products within 5 seconds"
+msgstr ""
+
+msgid "Blocks IP after 5 ANY adds within 10 seconds"
+msgstr ""
+
+msgid "Note:"
+msgstr ""
+
+msgid "These rules only apply to non-logged-in users. Blocked IPs are automatically unbanned after the configured time."
+msgstr ""
+
+msgid "Blocks IPs that add too many items too quickly"
+msgstr ""
+
+msgid "Save All Rules"
+msgstr ""
+
+msgid "Cart Remove Rules"
+msgstr ""
+
+msgid "Enable Cart Remove Rules"
+msgstr ""
+
+msgid "Format: attempts,seconds,type (0=same product, 1=different products, 2=any removes). Use # for comments."
+msgstr ""
+
+msgid "Blocks IP after 5 ANY removes within 5 seconds"
+msgstr ""
+
+msgid "Blocks IP after 3 removes of the SAME product within 10 seconds"
+msgstr ""
+
+msgid "Blocks IP after 7 removes of DIFFERENT products within 3 seconds"
+msgstr ""
+
+msgid "Blocks IPs that remove too many items too quickly"
+msgstr ""
+
 msgid "Save All Settings"
 msgstr ""
 
-#: includes/views/admin-settings.php:686
 msgid "Update Tor exit nodes?"
 msgstr ""
 
-#: includes/views/admin-settings.php:701
 msgid "just now"
 msgstr ""
 
-#: includes/views/admin-settings.php:717
 msgid "Update all bot IP ranges now?"
 msgstr ""
 
-#: includes/views/admin-settings.php:732
-msgid "just now"
+msgid "Clear all GeoIP cache? This will force new geolocation requests for all IPs."
+msgstr ""
+
+msgid "Clearing..."
+msgstr ""
+
+msgid "Active Blocks"
+msgstr ""
+
+msgid "Single IP, CIDR, range, or IPv6. Use # for comments."
+msgstr ""
+
+msgid "Last saved:"
+msgstr ""
+
+msgid "ago"
+msgstr ""
+
+msgid "Never"
+msgstr ""
+
+msgid "Save Blocklist"
+msgstr ""
+
+msgid "Whitelisted"
+msgstr ""
+
+msgid "IPs that bypass all blocking rules. Use # for comments."
+msgstr ""
+
+msgid "Save Whitelist"
+msgstr ""
+
+msgid "Blocked ASNs"
+msgstr ""
+
+msgid "networks"
+msgstr ""
+
+msgid "ASN numbers (13335, 16509). Use # for comments."
+msgstr ""
+
+msgid "Save ASN List"
+msgstr ""
+
+msgid "ON"
+msgstr ""
+
+msgid "OFF"
 msgstr ""
