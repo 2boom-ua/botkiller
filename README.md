@@ -2,7 +2,7 @@
 
 Advanced multi-layer bot protection for WooCommerce
 
-[![Version](https://img.shields.io/badge/version-2.9.9-green.svg)](https://github.com/yourusername/bot-killer)
+[![Version](https://img.shields.io/badge/version-3.0.4-green.svg)](https://github.com/yourusername/bot-killer)
 [![WooCommerce](https://img.shields.io/badge/WooCommerce-4.0+-blue.svg)](https://woocommerce.com)
 [![WordPress](https://img.shields.io/badge/WordPress-5.0+-orange.svg)](https://wordpress.org)
 [![License](https://img.shields.io/badge/license-GPLv2-red.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
