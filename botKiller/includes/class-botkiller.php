@@ -21,14 +21,19 @@ class BotKiller {
     private $blocklist_cache_time = 0;
     private $cache_ttl = 300;
     private $search_engine_ips_loaded = false;
+    private $cache_group = 'bot_killer';
+    private $block_meta_cache = null;
 
 public function __construct() {   
     static $instance_loaded = false;
     if ($instance_loaded) {
         return;
     }
+    
+    $this->cache_group = 'bot_killer';
      
     $this->setup_secure_directory();
+    $this->set_default_options();
     
     $saved_size_mb = get_option('bot_killer_max_log_size', 10);
     $this->max_log_size = $saved_size_mb * 1024 * 1024;
@@ -54,17 +59,20 @@ public function __construct() {
     add_action('wp_ajax_nopriv_bot_killer_js_detected', array($this, 'handle_js_detection'));
     add_action('wp_ajax_bot_killer_update_cloudflare', array($this, 'ajax_update_cloudflare'));
     add_action('wp_ajax_bot_killer_update_all_bots', array($this, 'ajax_update_all_bots'));
+    add_action('wp_ajax_bot_killer_clear_geoip_cache', array($this, 'ajax_clear_geoip_cache'));
+    add_action('wp_ajax_bot_killer_toggle_debug_mode', array($this, 'ajax_toggle_debug_mode'));
+    add_action('wp_ajax_bot_killer_export_blocked_ips', array($this, 'ajax_export_blocked_ips'));
+
     register_deactivation_hook(BOTKILLER_PLUGIN_FILE, array($this, 'deactivate'));
     add_action('wp_ajax_bot_killer_update_search_engines', array($this, 'ajax_update_search_engines'));
     add_action('woocommerce_thankyou', array($this, 'track_order'), 10, 1);
     add_action('woocommerce_order_status_completed', array($this, 'track_order'), 10, 1);
     add_action('woocommerce_cart_item_removed', array($this, 'track_remove_from_cart'), 10, 2);
     add_action('wp_ajax_bot_killer_update_tor_nodes', array($this, 'ajax_update_tor_nodes'));
-    add_action('bot_killer_update_cloudflare_ips', array($this, 'update_cloudflare_ips'));
+    add_action('wp_ajax_bot_killer_export_csv', array($this, 'ajax_export_csv'));
     
     // Schedule events
     if (!wp_next_scheduled('bot_killer_update_tor_nodes')) {
-        //wp_schedule_event(time(), 'hourly', 'bot_killer_update_tor_nodes');
         wp_schedule_event(time(), 'twicedaily', 'bot_killer_update_tor_nodes');
     }
     add_action('bot_killer_update_tor_nodes', array($this, 'update_tor_exit_nodes'));
@@ -112,7 +120,7 @@ public function __construct() {
             chmod($index_file, 0644);
         }
         
-        $this->log_file = $this->upload_dir . 'bot-killer-log.txt';
+        $this->log_file = $this->upload_dir . 'bot-killer-log.json';
         $this->block_file = $this->upload_dir . 'blocked-ips.txt';
         $this->block_meta_file = $this->upload_dir . 'blocked-ips-meta.json';
         $this->custom_block_file = $this->upload_dir . 'custom-blocked-ips.txt';
@@ -173,14 +181,10 @@ public function update_cloudflare_ips($source = 'cron') {
     $success = false;
     
     // Fetch IPv4 ranges
-    $response = wp_remote_get('https://www.cloudflare.com/ips-v4', array(
-        'timeout' => 15,
-        'sslverify' => true,
-        'user-agent' => 'Bot Killer WordPress Plugin/' . BOTKILLER_VERSION
-    ));
+    $body = $this->safe_api_request('https://www.cloudflare.com/ips-v4', array('timeout' => 15), 'cloudflare_v4');
     
-    if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
-        $body = trim(wp_remote_retrieve_body($response));
+    if ($body !== false) {
+        $body = trim($body);
         if (!empty($body)) {
             $ips['v4'] = array_filter(explode("\n", $body));
             $success = true;
@@ -188,14 +192,10 @@ public function update_cloudflare_ips($source = 'cron') {
     }
     
     // Fetch IPv6 ranges
-    $response = wp_remote_get('https://www.cloudflare.com/ips-v6', array(
-        'timeout' => 15,
-        'sslverify' => true,
-        'user-agent' => 'Bot Killer WordPress Plugin/' . BOTKILLER_VERSION
-    ));
+    $body = $this->safe_api_request('https://www.cloudflare.com/ips-v6', array('timeout' => 15), 'cloudflare_v6');
     
-    if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
-        $body = trim(wp_remote_retrieve_body($response));
+    if ($body !== false) {
+        $body = trim($body);
         if (!empty($body)) {
             $ips['v6'] = array_filter(explode("\n", $body));
             $success = true;
@@ -214,7 +214,7 @@ public function update_cloudflare_ips($source = 'cron') {
             '2405:8100::/32', '2a06:98c0::/29', '2c0f:f248::/32'
         ];
         
-        $this->log_action('SYSTEM', __('Using fallback Cloudflare IPs - fetch failed', 'bot-killer'));
+        $this->log_json('SYSTEM', 'Using fallback Cloudflare IPs - fetch failed', 'system', 'log-default');
         $success = true;
     } else {
         $v4_count = count($ips['v4']);
@@ -222,17 +222,9 @@ public function update_cloudflare_ips($source = 'cron') {
         
         // Log based on source
         if ($source === 'manual') {
-            $this->log_action('SYSTEM', sprintf(
-                __('Cloudflare IPs manually updated: %d IPv4, %d IPv6 ranges', 'bot-killer'),
-                $v4_count,
-                $v6_count
-            ));
+            $this->log_json('SYSTEM', sprintf('Cloudflare IPs manually updated: %d IPv4, %d IPv6 ranges', $v4_count, $v6_count), 'system', 'log-default');
         } else {
-            $this->log_action('SYSTEM', sprintf(
-                __('Cloudflare IPs updated via cron: %d IPv4, %d IPv6 ranges', 'bot-killer'),
-                $v4_count,
-                $v6_count
-            ));
+            $this->log_json('SYSTEM', sprintf('Cloudflare IPs updated via cron: %d IPv4, %d IPv6 ranges', $v4_count, $v6_count), 'system', 'log-default');
         }
     }
     
@@ -346,6 +338,188 @@ public function ajax_update_all_bots() {
     wp_send_json_success(__('All bot IP ranges updated successfully!', 'bot-killer'));
 }
 
+public function ajax_export_csv() {
+    if (!check_ajax_referer('bot_killer_export_csv', 'nonce', false)) {
+        wp_die(__('Invalid security token', 'bot-killer'), '', array('response' => 403));
+    }
+    
+    if (!current_user_can('manage_options')) {
+        wp_die(__('Permission denied', 'bot-killer'), '', array('response' => 403));
+    }
+    
+    // Read all log entries
+    $log_entries = [];
+    if (file_exists($this->log_file)) {
+        $content = file_get_contents($this->log_file);
+        $lines = explode("\n", trim($content));
+        foreach ($lines as $line) {
+            if (empty($line)) continue;
+            $entry = json_decode($line, true);
+            if ($entry) {
+                $log_entries[] = $entry;
+            }
+        }
+    }
+    
+    // Reverse to show newest first
+    $log_entries = array_reverse($log_entries);
+    
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="bot-killer-log-' . date('Y-m-d') . '.csv"');
+    
+    $output = fopen('php://output', 'w');
+    fputcsv($output, ['Time', 'IP', 'Type', 'Message']);
+    
+    foreach ($log_entries as $entry) {
+        fputcsv($output, [
+            $entry['time'] ?? '',
+            $entry['ip'] ?? '',
+            $entry['type'] ?? '',
+            $entry['message'] ?? ''
+        ]);
+    }
+    
+    fclose($output);
+    wp_die();
+}
+
+public function ajax_export_blocked_ips() {
+    if (!check_ajax_referer('bot_killer_export_ips', 'nonce', false)) {
+        wp_die(__('Invalid security token', 'bot-killer'), '', array('response' => 403));
+    }
+    
+    if (!current_user_can('manage_options')) {
+        wp_die(__('Permission denied', 'bot-killer'), '', array('response' => 403));
+    }
+    
+    $blocked_ips = file_exists($this->block_file) ? 
+        file($this->block_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [];
+    
+    if (empty($blocked_ips)) {
+        wp_die(__('No blocked IPs found', 'bot-killer'), '', array('response' => 404));
+    }
+    
+    $meta = $this->get_block_meta();
+    
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="auto-blocked-ips-' . date('Y-m-d') . '.csv"');
+    
+    $output = fopen('php://output', 'w');
+    
+    // Headers with all fields
+    fputcsv($output, [
+        'IP',
+        'Country',
+        'City',
+        'Blocked At',
+        'Unblocks At',
+        'Reason',
+        'User Agent',
+        'ASN',
+        'AS Name',
+        'Bot Name',
+        'Verification Method',
+        'Block Source'
+    ]);
+    
+    foreach ($blocked_ips as $ip) {
+        $ip = trim($ip);
+        if (empty($ip)) continue;
+        
+        $info = isset($meta[$ip]) ? $meta[$ip] : null;
+        
+        $country = '';
+        $city = '';
+        $blocked_at = '';
+        $unblocks_at = '';
+        $reason = '';
+        $user_agent = '';
+        $asn = '';
+        $as_name = '';
+        $bot_name = '';
+        $verification_method = '';
+        $block_source = '';
+        
+        if ($info) {
+            $geo = $info['geo'] ?? null;
+            $country = $geo['country_code'] ?? '';
+            $city = $geo['city'] ?? '';
+            $blocked_at = $info['blocked_at_readable'] ?? '';
+            $unblocks_at = $info['unblock_at_readable'] ?? '';
+            $reason = $info['reason'] ?? '';
+            $user_agent = $info['user_agent'] ?? '';
+            $asn = $info['asn'] ?? '';
+            $as_name = $info['as_name'] ?? '';
+            $bot_name = $info['bot_name'] ?? '';
+            $verification_method = $info['verification_method'] ?? '';
+            $block_source = $info['block_source'] ?? '';
+        }
+        
+        fputcsv($output, [
+            $ip,
+            $country,
+            $city,
+            $blocked_at,
+            $unblocks_at,
+            $reason,
+            $user_agent,
+            $asn,
+            $as_name,
+            $bot_name,
+            $verification_method,
+            $block_source
+        ]);
+    }
+    
+    fclose($output);
+    wp_die();
+}
+
+public function ajax_clear_geoip_cache() {
+    // Verify nonce and capabilities
+    if (!check_ajax_referer('bot_killer_ajax', 'nonce', false)) {
+        wp_send_json_error(__('Invalid security token. Please refresh the page and try again.', 'bot-killer'));
+    }
+    
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('You do not have permission to perform this action.', 'bot-killer'));
+    }
+    
+    global $wpdb;
+    
+    // Delete all GeoIP transients
+    $count = $wpdb->query(
+        "DELETE FROM {$wpdb->options} 
+         WHERE option_name LIKE '_transient_bot_killer_geo_%' 
+         OR option_name LIKE '_transient_timeout_bot_killer_geo_%'"
+    );
+    
+    if ($count === false) {
+        wp_send_json_error(__('Failed to clear GeoIP cache.', 'bot-killer'));
+    }
+    
+    $this->log_json('SYSTEM', sprintf('GeoIP cache cleared: %d entries deleted', $count), 'system', 'log-default');
+    
+    wp_send_json_success(sprintf(__('GeoIP cache cleared! %d entries deleted.', 'bot-killer'), $count));
+}
+
+public function ajax_toggle_debug_mode() {
+    if (!check_ajax_referer('bot_killer_ajax', 'nonce', false)) {
+        wp_send_json_error(__('Invalid security token.', 'bot-killer'));
+    }
+    
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('You do not have permission to perform this action.', 'bot-killer'));
+    }
+    
+    $enabled = isset($_POST['enabled']) ? intval($_POST['enabled']) : 0;
+    update_option('bot_killer_debug_mode', $enabled);
+    
+    $this->log_json('SYSTEM', 'Debug mode ' . ($enabled ? 'enabled' : 'disabled'), 'system', 'log-default');
+    
+    wp_send_json_success(array('enabled' => $enabled));
+}
+
 private function fetch_google_ips($source = 'cron') {
     $ips = [];
     
@@ -355,15 +529,11 @@ private function fetch_google_ips($source = 'cron') {
     ];
     
     foreach ($urls as $url) {
-        $response = wp_remote_get($url, array(
-            'timeout'    => 10,
-            'sslverify'  => true,
-            'user-agent' => 'Bot Killer WordPress Plugin/' . BOTKILLER_VERSION
-        ));
+        $body = $this->safe_api_request($url, array('timeout' => 10), 'google_ips');
         
-        if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
-            $data = json_decode(wp_remote_retrieve_body($response), true);
-
+        if ($body !== false) {
+            $data = json_decode($body, true);
+            
             if (isset($data['prefixes']) && is_array($data['prefixes'])) {
                 foreach ($data['prefixes'] as $prefix) {
                     if (isset($prefix['ipv4Prefix'])) {
@@ -373,31 +543,25 @@ private function fetch_google_ips($source = 'cron') {
                         $ips[] = $prefix['ipv6Prefix'];
                     }
                 }
-
+                
                 if (!empty($ips)) {
                     break;
                 }
             }
         }
     }
-
+    
     $unique_ips = array_values(array_unique($ips));
     
     // Log based on source
     if (!empty($unique_ips)) {
         if ($source === 'manual') {
-            $this->log_action('SYSTEM', sprintf(
-                __('Google IP ranges manually updated: %d ranges', 'bot-killer'),
-                count($unique_ips)
-            ));
+            $this->log_json('SYSTEM', sprintf('Google IP ranges manually updated: %d ranges', count($unique_ips)), 'system', 'log-default');
         } else {
-            $this->log_action('SYSTEM', sprintf(
-                __('Google IP ranges updated via cron: %d ranges', 'bot-killer'),
-                count($unique_ips)
-            ));
+            $this->log_json('SYSTEM', sprintf('Google IP ranges updated via cron: %d ranges', count($unique_ips)), 'system', 'log-default');
         }
     } else {
-        $this->log_action('SYSTEM', __('Google IP ranges update failed - using fallback', 'bot-killer'));
+        $this->log_json('SYSTEM', 'Google IP ranges update failed - using fallback', 'system', 'log-default');
     }
     
     return $unique_ips;
@@ -405,14 +569,11 @@ private function fetch_google_ips($source = 'cron') {
 
 private function fetch_bing_ips($source = 'cron') {
     $ips = [];
-    $response = wp_remote_get('https://www.bing.com/toolbox/bingbot.json', array(
-        'timeout' => 10, 
-        'sslverify' => true, 
-        'user-agent' => 'Bot Killer WordPress Plugin/' . BOTKILLER_VERSION
-    ));
     
-    if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
-        $data = json_decode(wp_remote_retrieve_body($response), true);
+    $body = $this->safe_api_request('https://www.bing.com/toolbox/bingbot.json', array('timeout' => 10), 'bing_ips');
+    
+    if ($body !== false) {
+        $data = json_decode($body, true);
         if (isset($data['prefixes']) && is_array($data['prefixes'])) {
             foreach ($data['prefixes'] as $prefix) {
                 if (isset($prefix['ipv4Prefix'])) $ips[] = $prefix['ipv4Prefix'];
@@ -433,19 +594,13 @@ private function fetch_bing_ips($source = 'cron') {
                 '52.0.0.0/8', '65.55.0.0/16', '131.253.0.0/16', '157.55.0.0/16', '207.46.0.0/16', 
                 '2620:1ec::/32', '2a01:111::/32', '2001:4898::/32'];
         
-        $this->log_action('SYSTEM', __('Bing IP ranges update failed - using fallback', 'bot-killer'));
+        $this->log_json('SYSTEM', 'Bing IP ranges update failed - using fallback', 'system', 'log-default');
     } else {
         // Log based on source
         if ($source === 'manual') {
-            $this->log_action('SYSTEM', sprintf(
-                __('Bing IP ranges manually updated: %d ranges', 'bot-killer'),
-                count($ips)
-            ));
+            $this->log_json('SYSTEM', sprintf('Bing IP ranges manually updated: %d ranges', count($ips)), 'system', 'log-default');
         } else {
-            $this->log_action('SYSTEM', sprintf(
-                __('Bing IP ranges updated via cron: %d ranges', 'bot-killer'),
-                count($ips)
-            ));
+            $this->log_json('SYSTEM', sprintf('Bing IP ranges updated via cron: %d ranges', count($ips)), 'system', 'log-default');
         }
     }
     
@@ -475,471 +630,668 @@ private function fetch_bing_ips($source = 'cron') {
     }
 
 private function get_cart_interacting_bot($ip, $user_agent) {
+    // ========== CHECK IF IP IS IN CUSTOM BLOCKLIST ==========
+    if ($this->is_ip_in_custom_blocklist($ip)) {
+        return false;
+    }
+
     // ========== CHECK IF IP IS ALREADY BLOCKED ==========
     if ($this->is_ip_blocked($ip)) {
         return false; // IP already banned, don't waste resources
     }
-    // =====================================================
+    
+    // ========== FACEBOOK APP USERS ==========
+    $ua = $user_agent;
+    
+    // 1. Real Facebook app users
+    if (strpos($ua, 'FBAN') !== false || strpos($ua, 'FBAV') !== false) {
+        return false;
+    }
+    
+    // 2. Facebook crawler (must have ASN 32934 or 63293)
+    if (strpos($ua, 'facebookexternalhit') !== false || strpos($ua, 'Facebot') !== false) {
+    
+        $asn_info = $this->get_asn_for_ip($ip);
+        $asn = $asn_info ? $asn_info['asn'] : null;
+        $asn_text = $asn ? " (ASN: {$asn})" : '';
+    
+        $is_mobile = $this->is_mobile_browser($ua);
+    
+        // ========== MULTI-BOT SPOOF CHECK ==========
+        if (
+            stripos($ua, 'facebookexternalhit') !== false &&
+            stripos($ua, 'Twitterbot') !== false
+        ) {
+            // Allow mobile (messengers, previews)
+            if ($is_mobile) {
+                $this->log_json(
+                    $ip,
+                    "Multi-bot UA (facebook + twitter) on mobile - allowed{$asn_text}",
+                    'social_browser',
+                    'log-cart-bot'
+                );
+                return false;
+            }
+    
+            // Desktop → spoof
+            $this->log_json(
+                $ip,
+                "SPOOF ATTEMPT HIGH: MULTI-BOT (facebook + twitter){$asn_text}",
+                'spoof',
+                'log-spoof-attempt'
+            );
+    
+            $this->block_ip($ip, "SPOOF ATTEMPT HIGH: multi-bot", 'multi_bot', 'multi_bot_detected', 'spoof_multi_bot');
+            return false;
+        }
+        // ===========================================
+    
+        // Main check Facebook ASN
+        if (!$asn || !in_array($asn, ['32934', '63293'])) {
+    
+            // Mobile → allow
+            if ($is_mobile) {
+                $this->log_json(
+                    $ip,
+                    "Facebook crawler UA on mobile device - allowed{$asn_text}",
+                    'social_browser',
+                    'log-cart-bot'
+                );
+                return false;
+            }
+    
+            // Desktop → block
+            $this->log_json(
+                $ip,
+                "SPOOF ATTEMPT HIGH: Facebook bot — requires Meta IP ranges (AS32934/AS63293){$asn_text}",
+                'spoof',
+                'log-spoof-attempt'
+            );
+    
+            $this->block_ip($ip, "SPOOF ATTEMPT HIGH: facebook", 'facebook', 'asn_mismatch', 'spoof_facebook');
+            return false;
+        }
+    
+        // Verified Facebook bot
+        $this->log_json(
+            $ip,
+            "Facebook crawler - verified (ASN 32934/63293)",
+            'bot_detected',
+            'log-cart-bot'
+        );
+    
+        return 'facebook';
+    }
+
+    // ========== AMAZONBOT ==========
+    if (stripos($ua, 'Amazonbot') !== false) {
+        $hostname = $this->reverse_dns_lookup($ip, 3);
+        
+        if (!$hostname || strpos($hostname, '.crawl.amazonbot.amazon') === false) {
+            $this->log_json(
+                $ip,
+                "SPOOF ATTEMPT: Amazonbot — invalid DNS ({$hostname})",
+                'spoof',
+                'log-spoof-attempt'
+            );
+            $this->block_ip($ip, "SPOOF ATTEMPT: Amazonbot", 'amazonbot', 'dns_mismatch', 'spoof_amazon');
+            return false;
+        }
+        
+        $forward_ips = $this->forward_dns_lookup($hostname, 3);
+        if (!$forward_ips || !in_array($ip, $forward_ips)) {
+            $this->log_json(
+                $ip,
+                "SPOOF ATTEMPT: Amazonbot — forward DNS failed",
+                'spoof',
+                'log-spoof-attempt'
+            );
+            $this->block_ip($ip, "SPOOF ATTEMPT: Amazonbot", 'amazonbot', 'dns_mismatch', 'spoof_amazon');
+            return false;
+        }
+        
+        $this->log_json($ip, "Amazonbot - verified (DNS)", 'bot_detected', 'log-cart-bot');
+        return 'amazonbot';
+    }
+    // =========================================
     
     $cache_key = 'bot_killer_bot_type_' . md5($ip . $user_agent);
     $cached = get_transient($cache_key);
     if ($cached !== false) {
         return $cached;
     }
-    
-    $cart_bots = [
+
         // =============================================
         // SEARCH ENGINES - STRICT CRAWLERS
         // =============================================
-        'google' => [
-            'agents' => ['Googlebot', 'Googlebot-Image', 'Googlebot-News', 'Googlebot-Video', 
-                        'Googlebot-Mobile', 'AdsBot-Google', 'Mediapartners-Google', 
-                        'APIs-Google', 'DuplexWeb-Google', 'FeedFetcher-Google',
-                        'Google-Read-Aloud', 'Google-Site-Verification', 'Google-PageRenderer',
-                        'Googlebot/2.1', 'Googlebot/2.2'],
-            'dns' => ['.googlebot.com', '.google.com'],
-            'ip_ranges' => $this->google_ips,
-            'asn' => ['15169'],
-            'type' => 'strict',
-            'allow_js' => true,
-            'require_verification' => true,
-            'spoof_risk' => 'high',
-            'description' => 'Google bot — requires googlebot.com domain or Google IP'
-        ],
-        'bing' => [
-            'agents' => ['bingbot', 'BingPreview', 'msnbot', 'msnbot-media', 
-                        'adidxbot', 'BingBot', 'BingMobile'],
-            'dns' => ['.search.msn.com'],
-            'ip_ranges' => $this->bing_ips,
-            'asn' => ['8068', '8069', '8070', '8071', '8072', '8073', '8074', '8075'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'high',
-            'description' => 'Bing bot — requires search.msn.com domain or Microsoft IP'
-        ],
-        'baidu' => [
-            'agents' => ['Baiduspider', 'Baiduspider-image', 'Baiduspider-video', 'Baiduspider-news'],
-            'ip_ranges' => $this->get_baidu_ip_ranges(),
-            'asn' => ['55967', '37965'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'Baidu bot — requires official IP ranges'
-        ],
-        'yandex' => [
-            'agents' => ['YandexBot', 'YandexImages', 'YandexVideo', 'YandexNews', 'YandexMobileBot'],
-            'dns' => ['.yandex.ru', '.yandex.net'],
-            'ip_ranges' => $this->get_yandex_ip_ranges(),
-            'asn' => ['13238', '208722'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'Yandex bot — requires DNS or IP verification'
-        ],
-        'duckduckgo' => [
-            'agents' => ['DuckDuckBot', 'DuckDuckGo-Favicons-Bot'],
-            'ip_ranges' => $this->get_duckduckgo_ip_ranges(),
-            'asn' => ['42729'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'DuckDuckGo bot — requires official IP ranges'
-        ],
-        'seznam' => [
-            'agents' => ['SeznamBot'],
-            'ip_ranges' => $this->get_seznam_ip_ranges(),
-            'asn' => ['43037'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'low',
-            'description' => 'Seznam search crawler'
-        ],
-        'petalbot' => [
-            'agents' => ['PetalBot'],
-            'ip_ranges' => $this->get_petalbot_ip_ranges(),
-            'asn' => ['136907'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'low',
-            'description' => 'Huawei Petal search crawler'
-        ],
+        $cart_bots = [
 
-        // =============================================
-        // SOCIAL PREVIEW BOTS
-        // =============================================
-        'facebook' => [
-            'agents' => ['facebookexternalhit', 'meta-externalagent', 'meta-webindexer', 
-                        'meta-externalads', 'meta-externalfetcher', 'Facebot'],
-            'ip_ranges' => $this->get_facebook_ip_ranges(),
-            'asn' => ['32934', '63293'],
-            'type' => 'social',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'high',
-            'description' => 'Facebook bot — requires AS32934 or AS63293'
-        ],
-        'whatsapp' => [
-            'agents' => ['WhatsApp'],
-            'ip_ranges' => $this->get_facebook_ip_ranges(),
-            'asn' => ['32934'],
-            'type' => 'social',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'WhatsApp link preview bot'
-        ],
-        'linkedin' => [
-            'agents' => ['LinkedInBot'],
-            'ip_ranges' => $this->get_linkedin_ip_ranges(),
-            'asn' => ['14413'],
-            'type' => 'social',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'LinkedIn bot — requires AS14413'
-        ],
-        'pinterest' => [
-            'agents' => ['Pinterestbot'],
-            'ip_ranges' => $this->get_pinterest_ip_ranges(),
-            'asn' => ['40027'],
-            'type' => 'social',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'Pinterest bot — requires official IP ranges'
-        ],
-        'twitter' => [
-            'agents' => ['Twitterbot'],
-            'ip_ranges' => $this->get_twitter_ip_ranges(),
-            'asn' => ['13414'],
-            'type' => 'social',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'Twitter bot — requires AS13414'
-        ],
-        'discord' => [
-            'agents' => ['Discordbot'],
-            'ip_ranges' => $this->get_discord_ip_ranges(),
-            'asn' => ['46475', '36978'],
-            'type' => 'social',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'low',
-            'description' => 'Discord bot — requires official IP ranges'
-        ],
-        'slack' => [
-            'agents' => ['Slackbot-LinkExpanding', 'Slack-ImgProxy'],
-            'ip_ranges' => $this->get_slack_ip_ranges(),
-            'asn' => [],
-            'type' => 'social',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'low',
-            'description' => 'Slack bot — requires official IP ranges'
-        ],
-        'telegram' => [
-            'agents' => ['TelegramBot', 'TelegramBot (like TwitterBot)'],
-            'ip_ranges' => $this->get_telegram_ip_ranges(),
-            'asn' => [],
-            'type' => 'social',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'low',
-            'description' => 'Telegram bot — requires official IP ranges'
-        ],
-        'microsoftpreview' => [
-            'agents' => ['SkypeUriPreview', 'TeamsBot'],
-            'ip_ranges' => $this->bing_ips,
-            'asn' => ['8075'],
-            'type' => 'social',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'low',
-            'description' => 'Microsoft link preview bots'
-        ],
-
-        // =============================================
-        // AI & HYBRID BOTS
-        // =============================================
-        'openai' => [
-            'agents' => ['OAI-SearchBot', 'ChatGPT-User', 'GPTBot'],
-            'ip_ranges' => $this->get_openai_ip_ranges(),
-            'asn' => [],
-            'type' => 'hybrid',
-            'allow_js' => true,
-            'require_verification' => true,
-            'spoof_risk' => 'high',
-            'description' => 'OpenAI bot — requires official IP ranges'
-        ],
-        'anthropic' => [
-            'agents' => ['ClaudeBot', 'Claude-SearchBot', 'Claude-User'],
-            'ip_ranges' => $this->get_anthropic_ip_ranges(),
-            'asn' => [],
-            'type' => 'hybrid',
-            'allow_js' => true,
-            'require_verification' => true,
-            'spoof_risk' => 'high',
-            'description' => 'Claude bot — requires official IP ranges'
-        ],
-        'perplexity' => [
-            'agents' => ['PerplexityBot', 'Perplexity-User'],
-            'ip_ranges' => $this->get_perplexity_ip_ranges(),
-            'asn' => [],
-            'type' => 'hybrid',
-            'allow_js' => true,
-            'require_verification' => true,
-            'spoof_risk' => 'high',
-            'description' => 'Perplexity bot — requires official IP ranges'
-        ],
-        'gemini' => [
-            'agents' => ['Gemini-Deep-Research'],
-            'ip_ranges' => $this->google_ips,
-            'asn' => ['15169'],
-            'type' => 'hybrid',
-            'allow_js' => true,
-            'require_verification' => true,
-            'spoof_risk' => 'high',
-            'description' => 'Gemini bot — requires Google IP ranges'
-        ],
-        'google_ai' => [
-            'agents' => ['Google-Extended', 'Google-CloudVertexBot'],
-            'dns' => ['.google.com', '.googlebot.com'],
-            'ip_ranges' => $this->google_ips,
-            'asn' => ['15169'],
-            'type' => 'hybrid',
-            'allow_js' => true,
-            'require_verification' => true,
-            'spoof_risk' => 'high',
-            'description' => 'Google AI crawler (Google-Extended, Vertex AI)'
-        ],
-        'bytespider' => [
-            'agents' => ['Bytespider'],
-            'dns' => [],
-            'ip_ranges' => $this->get_bytespider_ip_ranges(),
-            'asn' => ['37963', '45090'],
-            'type' => 'hybrid',
-            'allow_js' => true,
-            'require_verification' => true,
-            'spoof_risk' => 'high',
-            'description' => 'Bytespider — requires ByteDance ASNs'
-        ],
-        'tiktok' => [
-            'agents' => ['TikTokBot'],
-            'ip_ranges' => $this->get_tiktok_ip_ranges(),
-            'asn' => ['396982', '45102'],
-            'type' => 'hybrid',
-            'allow_js' => true,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'TikTok crawler'
-        ],
-        'mistral' => [
-            'agents' => ['MistralAI-User'],
-            'dns' => ['.mistral.ai'],
-            'ip_ranges' => ['212.115.41.0/24'],
-            'asn' => ['212949'],
-            'type' => 'hybrid',
-            'allow_js' => true,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'Mistral AI — requires AS212949 or official IP'
-        ],
-        'grok' => [
-            'agents' => ['Grok', 'xAI'],
-            'dns' => ['.x.ai', '.grok.com'],
-            'ip_ranges' => [],
-            'asn' => [],
-            'type' => 'hybrid',
-            'allow_js' => true,
-            'require_verification' => false,
-            'spoof_risk' => 'medium',
-            'description' => 'Grok — requires x.ai or grok.com domain'
-        ],
-        'deepseek' => [
-            'agents' => [],
-            'dns' => ['.deepseek.com'],
-            'ip_ranges' => [],
-            'asn' => [],
-            'type' => 'hybrid',
-            'allow_js' => true,
-            'require_verification' => false,
-            'spoof_risk' => 'low',
-            'description' => 'DeepSeek AI'
-        ],
-        'qwen' => [
-            'agents' => ['QwenBot'],
-            'dns' => ['.qwenlm.ai', '.aliyun.com'],
-            'ip_ranges' => [],
-            'asn' => ['37963'],
-            'type' => 'hybrid',
-            'allow_js' => true,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'Alibaba Qwen AI — requires AS37963'
-        ],
-        'metaai' => [
-            'agents' => ['Meta-ExternalAgent', 'Meta-ExternalFetcher'],
-            'ip_ranges' => $this->get_facebook_ip_ranges(),
-            'asn' => ['32934'],
-            'type' => 'hybrid',
-            'allow_js' => true,
-            'require_verification' => true,
-            'spoof_risk' => 'high',
-            'description' => 'Meta AI crawler'
-        ],
-
-        // =============================================
-        // SEO CRAWLERS
-        // =============================================
-        'ahrefs' => [
-            'agents' => ['AhrefsBot', 'AhrefsSiteAudit'],
-            'ip_ranges' => $this->get_ahrefs_ip_ranges(),
-            'asn' => ['209242'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'Ahrefs crawler — requires official IP ranges'
-        ],
-        'semrush' => [
-            'agents' => ['SemrushBot', 'SemrushBot-SA'],
-            'ip_ranges' => $this->get_semrush_ip_ranges(),
-            'asn' => ['203726'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'Semrush crawler — requires official IP ranges'
-        ],
-        'mj12bot' => [
-            'agents' => ['MJ12bot'],
-            'ip_ranges' => $this->get_mj12_ip_ranges(),
-            'asn' => ['204734'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'Majestic crawler'
-        ],
-        'dotbot' => [
-            'agents' => ['DotBot'],
-            'ip_ranges' => $this->get_dotbot_ip_ranges(),
-            'asn' => ['26347'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'medium',
-            'description' => 'Moz crawler'
-        ],
-
-        // =============================================
-        // CLOUD & OTHER
-        // =============================================
-        'cloudflare' => [
-            'agents' => ['Cloudflare'],
-            'ip_ranges' => $this->cloudflare_ips,
-            'asn' => ['13335'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'low',
-            'description' => 'Cloudflare bot — requires AS13335'
-        ],
-        'ccbot' => [
-            'agents' => ['CCBot'],
-            'dns' => ['.crawl.commoncrawl.org'],
-            'ip_ranges' => $this->get_ccbot_ip_ranges(),
-            'asn' => ['16509'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'low',
-            'description' => 'CCBot — requires crawl.commoncrawl.org domain'
-        ],
-        'amazonbot' => [
-            'agents' => ['Amazonbot'],
-            'dns' => ['.crawl.amazonbot.amazon'],
-            'ip_ranges' => $this->get_amazonbot_ip_ranges(),
-            'asn' => ['16509'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'low',
-            'description' => 'Amazonbot — requires crawl.amazonbot.amazon domain'
-        ],
-        'applebot' => [
-            'agents' => ['Applebot'],
-            'dns' => ['.applebot.apple.com'],
-            'ip_ranges' => $this->get_applebot_ip_ranges(),
-            'asn' => ['714', '6185'],
-            'type' => 'strict',
-            'allow_js' => false,
-            'require_verification' => true,
-            'spoof_risk' => 'low',
-            'description' => 'Applebot — requires applebot.apple.com domain'
-        ],
-        'youbot' => [
-            'agents' => ['YouBot'],
-            'dns' => [],
-            'ip_ranges' => $this->get_youbot_ip_ranges(),
-            'asn' => [],
-            'type' => 'hybrid',
-            'allow_js' => true,
-            'require_verification' => true,
-            'spoof_risk' => 'low',
-            'description' => 'YouBot AI search crawler'
-        ],
-    ];
+            'google' => [
+                'agents' => ['Googlebot', 'Googlebot-Image', 'Googlebot-News', 'Googlebot-Video', 
+                            'Googlebot-Mobile', 'AdsBot-Google', 'Mediapartners-Google', 
+                            'APIs-Google', 'DuplexWeb-Google', 'FeedFetcher-Google',
+                            'Google-Read-Aloud', 'Google-Site-Verification', 'Google-PageRenderer',
+                            'Googlebot/2.1', 'Googlebot/2.2'],
+                'dns' => ['.googlebot.com', '.google.com'],
+                'ip_ranges' => $this->google_ips,
+                'asn' => ['15169'],
+                'type' => 'strict',
+                'allow_js' => true,
+                'require_verification' => true,
+                'require_dns_only' => true,
+                'spoof_risk' => 'high',
+                'description' => 'Google bot — DNS or Google IP required'
+            ],
+            'bing' => [
+                'agents' => ['bingbot', 'BingPreview', 'msnbot', 'msnbot-media', 
+                            'adidxbot', 'BingBot', 'BingMobile'],
+                'dns' => ['.search.msn.com'],
+                'ip_ranges' => $this->bing_ips,
+                'asn' => ['8068', '8069', '8070', '8071', '8072', '8073', '8074', '8075'],
+                'type' => 'strict',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => true,
+                'spoof_risk' => 'high',
+                'description' => 'Bing bot — DNS + Microsoft IP required'
+            ],
+            'baidu' => [
+                'agents' => ['Baiduspider', 'Baiduspider-image', 'Baiduspider-video', 'Baiduspider-news'],
+                'ip_ranges' => $this->get_baidu_ip_ranges(),
+                'asn' => ['55967', '37965'],
+                'type' => 'strict',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'medium',
+                'description' => 'Baidu bot — requires official Baidu IP ranges'
+            ],
+            'yandex' => [
+                'agents' => ['YandexBot', 'YandexImages', 'YandexVideo', 'YandexNews', 'YandexMobileBot'],
+                'dns' => ['.yandex.ru', '.yandex.net'],
+                'ip_ranges' => $this->get_yandex_ip_ranges(),
+                'asn' => ['13238', '208722'],
+                'type' => 'strict',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => true,
+                'spoof_risk' => 'medium',
+                'description' => 'Yandex bot — requires yandex DNS or official IP ranges'
+            ],
+            'duckduckgo' => [
+                'agents' => ['DuckDuckBot', 'DuckDuckGo-Favicons-Bot'],
+                'ip_ranges' => $this->get_duckduckgo_ip_ranges(),
+                'asn' => ['42729'],
+                'type' => 'strict',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'medium',
+                'description' => 'DuckDuckGo bot — requires official IP ranges'
+            ],
+            'seznam' => [
+                'agents' => ['SeznamBot'],
+                'ip_ranges' => $this->get_seznam_ip_ranges(),
+                'asn' => ['43037'],
+                'type' => 'strict',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'low',
+                'description' => 'Seznam bot — requires official IP ranges'
+            ],
+            'petalbot' => [
+                'agents' => ['PetalBot'],
+                'ip_ranges' => $this->get_petalbot_ip_ranges(),
+                'asn' => ['136907'],
+                'type' => 'strict',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'low',
+                'description' => 'PetalBot — requires official Huawei IP ranges'
+            ],
+        
+            // =============================================
+            // SOCIAL PREVIEW BOTS
+            // =============================================
+            
+            //'facebook' => [
+            //    'agents' => ['facebookexternalhit', 'meta-externalagent', 'meta-webindexer', 
+            //                'meta-externalads', 'meta-externalfetcher', 'Facebot'],
+            //    'ip_ranges' => $this->get_facebook_ip_ranges(),
+            //    'asn' => ['32934', '63293'],
+            //    'type' => 'social',
+            //    'allow_js' => false,
+            //    'require_verification' => true,
+            //    'require_dns_only' => false,
+            //    'spoof_risk' => 'high',
+            //    'description' => 'Facebook bot — requires Meta IP ranges (AS32934/AS63293)'
+            //],
+            'whatsapp' => [
+                'agents' => ['WhatsApp'],
+                'ip_ranges' => $this->get_facebook_ip_ranges(),
+                'asn' => ['32934'],
+                'type' => 'social',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'low',
+                'description' => 'WhatsApp bot — requires Meta IP ranges (AS32934)'
+            ],
+            'linkedin' => [
+                'agents' => ['LinkedInBot'],
+                'ip_ranges' => $this->get_linkedin_ip_ranges(),
+                'asn' => ['14413'],
+                'type' => 'social',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'low',
+                'description' => 'LinkedIn bot — requires AS14413 IP ranges'
+            ],
+            'pinterest' => [
+                'agents' => ['Pinterestbot'],
+                'ip_ranges' => $this->get_pinterest_ip_ranges(),
+                'asn' => ['40027'],
+                'type' => 'social',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'low',
+                'description' => 'Pinterest bot — requires official IP ranges'
+            ],
+            'twitter' => [
+                'agents' => ['Twitterbot'],
+                'ip_ranges' => $this->get_twitter_ip_ranges(),
+                'asn' => ['13414'],
+                'type' => 'social',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'low',
+                'description' => 'Twitter bot — requires AS13414 IP ranges'
+            ],
+            'discord' => [
+                'agents' => ['Discordbot'],
+                'ip_ranges' => $this->get_discord_ip_ranges(),
+                'asn' => ['46475', '36978'],
+                'type' => 'social',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'low',
+                'description' => 'Discord bot — requires official IP ranges'
+            ],
+            'slack' => [
+                'agents' => ['Slackbot-LinkExpanding', 'Slack-ImgProxy'],
+                'ip_ranges' => $this->get_slack_ip_ranges(),
+                'asn' => [],
+                'type' => 'social',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'low',
+                'description' => 'Slack bot — requires official IP ranges'
+            ],
+            'telegram' => [
+                'agents' => ['TelegramBot', 'TelegramBot (like TwitterBot)'],
+                'ip_ranges' => $this->get_telegram_ip_ranges(),
+                'asn' => [],
+                'type' => 'social',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'low',
+                'description' => 'Telegram bot — requires official IP ranges'
+            ],
+            'microsoftpreview' => [
+                'agents' => ['SkypeUriPreview', 'TeamsBot'],
+                'ip_ranges' => $this->bing_ips,
+                'asn' => ['8075'],
+                'type' => 'social',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'low',
+                'description' => 'Microsoft preview bot — requires Microsoft IP ranges (ASN 8075)'
+            ],
+        
+            // =============================================
+            // AI & HYBRID BOTS
+            // =============================================
+            'openai' => [
+                'agents' => ['OAI-SearchBot', 'ChatGPT-User', 'GPTBot'],
+                'ip_ranges' => $this->get_openai_ip_ranges(),
+                'asn' => [],
+                'type' => 'hybrid',
+                'allow_js' => true,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'medium',
+                'description' => 'OpenAI bot — requires official IP ranges (no ASN-only)'
+            ],
+            'anthropic' => [
+                'agents' => ['ClaudeBot', 'Claude-SearchBot', 'Claude-User'],
+                'ip_ranges' => $this->get_anthropic_ip_ranges(),
+                'asn' => [],
+                'type' => 'hybrid',
+                'allow_js' => true,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'high',
+                'description' => 'Claude bot — requires official IP ranges'
+            ],
+            'perplexity' => [
+                'agents' => ['PerplexityBot', 'Perplexity-User'],
+                'ip_ranges' => $this->get_perplexity_ip_ranges(),
+                'asn' => [],
+                'type' => 'hybrid',
+                'allow_js' => true,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'high',
+                'description' => 'Perplexity bot — requires official IP ranges'
+            ],
+            'gemini' => [
+                'agents' => ['Gemini-Deep-Research'],
+                'ip_ranges' => $this->google_ips,
+                'asn' => ['15169'],
+                'type' => 'hybrid',
+                'allow_js' => true,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'high',
+                'description' => 'Gemini bot — requires Google IP ranges'
+            ],
+            'google_ai' => [
+                'agents' => ['Google-Extended', 'Google-CloudVertexBot'],
+                'dns' => ['.google.com', '.googlebot.com'],
+                'ip_ranges' => $this->google_ips,
+                'asn' => ['15169'],
+                'type' => 'hybrid',
+                'allow_js' => true,
+                'require_verification' => true,
+                'require_dns_only' => true,
+                'spoof_risk' => 'high',
+                'description' => 'Google AI bot — requires google DNS or Google IP ranges'
+            ],
+            'bytespider' => [
+                'agents' => ['Bytespider'],
+                'dns' => [],
+                'ip_ranges' => $this->get_bytespider_ip_ranges(),
+                'asn' => ['37963', '45090'],
+                'type' => 'hybrid',
+                'allow_js' => true,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'high',
+                'description' => 'Bytespider — requires ByteDance IP ranges (AS37963/AS45090)'
+            ],
+            'tiktok' => [
+                'agents' => ['TikTokBot'],
+                'ip_ranges' => $this->get_tiktok_ip_ranges(),
+                'asn' => ['396982', '45102'],
+                'type' => 'hybrid',
+                'allow_js' => true,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'medium',
+                'description' => 'TikTok bot — requires official IP ranges'
+            ],
+            'mistral' => [
+                'agents' => ['MistralAI-User'],
+                'dns' => ['.mistral.ai'],
+                'ip_ranges' => ['212.115.41.0/24'],
+                'asn' => ['212949'],
+                'type' => 'hybrid',
+                'allow_js' => true,
+                'require_verification' => true,
+                'require_dns_only' => true,
+                'spoof_risk' => 'medium',
+                'description' => 'Mistral AI — requires mistral.ai DNS or AS212949'
+            ],
+            'grok' => [
+                'agents' => ['Grok', 'xAI'],
+                'dns' => ['.x.ai', '.grok.com'],
+                'ip_ranges' => [],
+                'asn' => [],
+                'type' => 'hybrid',
+                'allow_js' => true,
+                'require_verification' => false,
+                'require_dns_only' => true,
+                'spoof_risk' => 'medium',
+                'description' => 'Grok bot — requires x.ai or grok.com DNS'
+            ],
+                'deepseek' => [
+                'agents' => ['DeepSeekBot'],
+                'dns' => ['.deepseek.com'],
+                'ip_ranges' => [],
+                'asn' => [],
+                'type' => 'hybrid',
+                'allow_js' => true,
+                'require_verification' => false,
+                'require_dns_only' => true,
+                'spoof_risk' => 'low',
+                'description' => 'DeepSeek bot — requires deepseek.com DNS'
+            ],
+            'qwen' => [
+                'agents' => ['QwenBot'],
+                'dns' => ['.qwenlm.ai', '.aliyun.com'],
+                'ip_ranges' => [],
+                'asn' => ['37963'],
+                'type' => 'hybrid',
+                'allow_js' => true,
+                'require_verification' => true,
+                'require_dns_only' => true,
+                'spoof_risk' => 'medium',
+                'description' => 'Qwen bot — requires qwenlm.ai DNS or AS37963'
+            ],
+            'metaai' => [
+                'agents' => ['Meta-ExternalAgent', 'Meta-ExternalFetcher'],
+                'ip_ranges' => $this->get_facebook_ip_ranges(),
+                'asn' => ['32934'],
+                'type' => 'hybrid',
+                'allow_js' => true,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'high',
+                'description' => 'Meta AI bot — requires Meta IP ranges (AS32934)'
+            ],
+        
+            // =============================================
+            // SEO CRAWLERS
+            // =============================================
+            'ahrefs' => [
+                'agents' => ['AhrefsBot', 'AhrefsSiteAudit'],
+                'ip_ranges' => $this->get_ahrefs_ip_ranges(),
+                'asn' => ['209242'],
+                'type' => 'strict',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'medium',
+                'description' => 'Ahrefs bot — requires official IP ranges'
+            ],
+            'semrush' => [
+                'agents' => ['SemrushBot', 'SemrushBot-SA'],
+                'ip_ranges' => $this->get_semrush_ip_ranges(),
+                'asn' => ['203726'],
+                'type' => 'strict',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'medium',
+                'description' => 'Semrush bot — requires official IP ranges'
+            ],
+            'mj12bot' => [
+                'agents' => ['MJ12bot'],
+                'ip_ranges' => $this->get_mj12_ip_ranges(),
+                'asn' => ['204734'],
+                'type' => 'strict',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'medium',
+                'description' => 'MJ12 bot — requires official IP ranges'
+            ],
+            'dotbot' => [
+                'agents' => ['DotBot'],
+                'ip_ranges' => $this->get_dotbot_ip_ranges(),
+                'asn' => ['26347'],
+                'type' => 'strict',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'medium',
+                'description' => 'DotBot — requires official IP ranges'
+            ],
+        
+            // =============================================
+            // CLOUD & OTHER
+            // =============================================
+            'cloudflare' => [
+                'agents' => ['Cloudflare'],
+                'ip_ranges' => $this->cloudflare_ips,
+                'asn' => ['13335'],
+                'type' => 'strict',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'low',
+                'description' => 'Cloudflare bot — requires AS13335 IP ranges'
+            ],
+            'ccbot' => [
+                'agents' => ['CCBot'],
+                'dns' => ['.crawl.commoncrawl.org'],
+                'ip_ranges' => $this->get_ccbot_ip_ranges(),
+                'asn' => ['16509'],
+                'type' => 'strict',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => true,
+                'spoof_risk' => 'low',
+                'description' => 'CCBot — requires crawl.commoncrawl.org DNS'
+            ],
+            //'amazonbot' => [
+            //    'agents' => ['Amazonbot'],
+            //    'dns' => ['.crawl.amazonbot.amazon'],
+            //    'ip_ranges' => $this->get_amazonbot_ip_ranges(),
+            //    'asn' => ['16509'],
+            //    'type' => 'strict',
+            //    'allow_js' => false,
+            //    'require_verification' => true,
+            //   'require_dns_only' => true,
+            //    'spoof_risk' => 'low',
+            //    'description' => 'Amazonbot — requires crawl.amazonbot.amazon DNS'
+            //],
+            'applebot' => [
+                'agents' => ['Applebot'],
+                'dns' => ['.applebot.apple.com'],
+                'ip_ranges' => $this->get_applebot_ip_ranges(),
+                'asn' => ['714', '6185'],
+                'type' => 'strict',
+                'allow_js' => false,
+                'require_verification' => true,
+                'require_dns_only' => true,
+                'spoof_risk' => 'low',
+                'description' => 'Applebot — requires applebot.apple.com DNS'
+            ],
+            'youbot' => [
+                'agents' => ['YouBot'],
+                'dns' => [],
+                'ip_ranges' => $this->get_youbot_ip_ranges(),
+                'asn' => [],
+                'type' => 'hybrid',
+                'allow_js' => true,
+                'require_verification' => true,
+                'require_dns_only' => false,
+                'spoof_risk' => 'low',
+                'description' => 'YouBot — requires official IP ranges'
+            ],
+        ];
     
-    foreach ($cart_bots as $bot_name => $bot_data) {
-        foreach ($bot_data['agents'] as $agent) {
-            if (stripos($user_agent, $agent) !== false) {
-                
-                // ========== DNS verification ==========
-                if (isset($bot_data['dns']) && !empty($bot_data['dns'])) {
-                    $hostname = $this->reverse_dns_lookup($ip, 3);
-                    if ($hostname) {
-                        foreach ($bot_data['dns'] as $suffix) {
-                            if (strpos($hostname, $suffix) !== false) {
-                                $forward_ips = $this->forward_dns_lookup($hostname, 3);
-                                if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
-                                    $this->log_bot_detection($ip, $bot_name, $agent, 'dns_forward');
-                                    set_transient($cache_key, $bot_name, 12 * HOUR_IN_SECONDS);
-                                    return $bot_name;
-                                } else {
-                                    $this->log_action($ip, "Forward DNS verification FAILED for {$hostname} - possible spoof");
-                                }
+foreach ($cart_bots as $bot_name => $bot_data) {
+    foreach ($bot_data['agents'] as $agent) {
+        if (stripos($user_agent, $agent) !== false) {              
+            $dns_passed = false;
+            $ip_range_passed = false;
+            $asn_passed = false;
+            
+            // ========== DNS verification ==========
+            if (isset($bot_data['dns']) && !empty($bot_data['dns'])) {
+                $hostname = $this->reverse_dns_lookup($ip, 3);
+                if ($hostname) {
+                    foreach ($bot_data['dns'] as $suffix) {
+                        if (strpos($hostname, $suffix) !== false) {
+                            $forward_ips = $this->forward_dns_lookup($hostname, 3);
+                            if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
+                                $dns_passed = true;
+                            } else {
+                                $this->log_json($ip, "Forward DNS verification FAILED for {$hostname} - possible spoof", 'spoof', 'log-spoof-attempt');
                             }
                         }
                     }
                 }
-                
-                // ========== IP range verification ==========
-                if (isset($bot_data['ip_ranges']) && !empty($bot_data['ip_ranges'])) {
-                    foreach ($bot_data['ip_ranges'] as $range) {
-                        if ($this->ip_in_range($ip, $range)) {
-                            $this->log_bot_detection($ip, $bot_name, $agent, 'ip_range');
-                            set_transient($cache_key, $bot_name, 6 * HOUR_IN_SECONDS);
-                            return $bot_name;
-                        }
+            }
+            
+            // ========== IP range verification ==========
+            if (isset($bot_data['ip_ranges']) && !empty($bot_data['ip_ranges'])) {
+                foreach ($bot_data['ip_ranges'] as $range) {
+                    if ($this->ip_in_range($ip, $range)) {
+                        $ip_range_passed = true;
+                        break;
                     }
                 }
+            }
+            
+            // ========== ASN verification ==========
+            if (isset($bot_data['asn']) && !empty($bot_data['asn'])) {
+                $asn_info = $this->get_asn_for_ip($ip);
+                if ($asn_info && isset($asn_info['asn']) && in_array($asn_info['asn'], $bot_data['asn'])) {
+                    $asn_passed = true;
+                }
+            }
+
+            // ========== CHECK RESULT BASED ON require_dns_only ==========
+            if ($bot_data['require_dns_only'] === true) {
+                // Special case: if ASN is empty and DNS passed, consider it verified
+                $asn_empty = empty($bot_data['asn']);
                 
-                // ========== ASN verification ==========
-                if (isset($bot_data['asn']) && !empty($bot_data['asn'])) {
-                    $asn_info = $this->get_asn_for_ip($ip);
-                    if ($asn_info && isset($asn_info['asn']) && in_array($asn_info['asn'], $bot_data['asn'])) {
-                        $this->log_bot_detection($ip, $bot_name, $agent, 'asn_match');
-                        set_transient($cache_key, $bot_name, 6 * HOUR_IN_SECONDS);
-                        return $bot_name;
+                if (($dns_passed && $asn_passed) || ($asn_empty && $dns_passed)) {
+                    $this->log_bot_detection($ip, $bot_name, $agent, 'dns_forward');
+                    set_transient($cache_key, $bot_name, 12 * HOUR_IN_SECONDS);
+                    return $bot_name;
+                } else {
+                    $risk = $bot_data['spoof_risk'] ?? 'high';
+                    
+                    $debug = get_option('bot_killer_debug_mode', 0);
+                    if ($debug) {
+                        $log_entry = [
+                            'time' => $this->get_current_time(),
+                            'ip' => $ip,
+                            'message' => "[{$this->get_current_time()}] ip: {$ip} DEBUG: bot {$bot_name} - require_dns_only failed, dns_passed={$dns_passed}, asn_passed={$asn_passed}, risk={$risk}",
+                            'type' => 'system',
+                            'style' => 'log-default'
+                        ];
+                        file_put_contents($this->log_file, json_encode($log_entry) . "\n", FILE_APPEND | LOCK_EX);
                     }
+                    
+                    if ($risk === 'high') {
+                        $this->log_json($ip, "SPOOF ATTEMPT HIGH: {$bot_data['description']}", 'spoof', 'log-spoof-attempt');
+                        $this->block_ip($ip, "SPOOF ATTEMPT HIGH: {$bot_name}", $bot_name, 'verification_failed', 'spoof_bot');
+                    } else {
+                        $this->log_json($ip, "SPOOF ATTEMPT " . strtoupper($risk) . ": {$bot_data['description']}", 'spoof', 'log-spoof-attempt');
+                        $this->log_json($ip, "{$bot_name} - rejected (unverified IP)", 'rejected', 'log-blocked');
+                    }
+                    set_transient($cache_key, false, HOUR_IN_SECONDS);
+                    return false;
+                }
+            } else {
+                // Стара логіка: хоча б одна перевірка пройшла
+                if ($dns_passed || $ip_range_passed || $asn_passed) {
+                    set_transient($cache_key, $bot_name, 12 * HOUR_IN_SECONDS);
+                    return $bot_name;
                 }
                 
                 // ========== CHECK FOR JS/COOKIES ==========
@@ -949,28 +1301,39 @@ private function get_cart_interacting_bot($ip, $user_agent) {
                 // For strict bots (except Google) - JS/cookies = SPOOF
                 if ($bot_data['type'] === 'strict' && empty($bot_data['allow_js']) && ($has_js || $has_cookies)) {
                     $risk = $bot_data['spoof_risk'] ?? 'medium';
-                    $this->log_action($ip, "SPOOF ATTEMPT " . strtoupper($risk) . ": {$bot_name} with JS/cookies");
+                    $this->log_json($ip, "SPOOF ATTEMPT " . strtoupper($risk) . ": {$bot_name} with JS/cookies", 'spoof', 'log-spoof-attempt');
                     set_transient($cache_key, false, HOUR_IN_SECONDS);
                     
-                    // Block only for high risk
                     if ($risk === 'high') {
-                        $this->block_ip($ip, "SPOOF ATTEMPT HIGH: {$bot_name}");
+                        $this->block_ip($ip, "SPOOF ATTEMPT HIGH: {$bot_name}", $bot_name, 'js_cookies_detected', 'spoof_bot');
                     }
                     return false;
                 }
-                // ===============================================
                 
                 if (isset($bot_data['require_verification']) && $bot_data['require_verification']) {
                     $asn_info = $this->get_asn_for_ip($ip);
                     $asn_text = $asn_info ? " (ASN: {$asn_info['asn']})" : '';
                     $risk = $bot_data['spoof_risk'] ?? 'medium';
                     
-                    $this->log_action($ip, "SPOOF ATTEMPT " . strtoupper($risk) . ": {$bot_data['description']}{$asn_text}");
-                    set_transient($cache_key, false, HOUR_IN_SECONDS);
+                    $debug = get_option('bot_killer_debug_mode', 0);
+                    if ($debug) {
+                        $log_entry = [
+                            'time' => $this->get_current_time(),
+                            'ip' => $ip,
+                            'message' => "[{$this->get_current_time()}] ip: {$ip} DEBUG: bot {$bot_name} - require_verification failed, risk: {$risk}",
+                            'type' => 'system',
+                            'style' => 'log-default'
+                        ];
+                        file_put_contents($this->log_file, json_encode($log_entry) . "\n", FILE_APPEND | LOCK_EX);
+                    }
                     
                     if ($risk === 'high') {
-                        $this->block_ip($ip, "SPOOF ATTEMPT HIGH: {$bot_name}");
+                        $this->log_json($ip, "SPOOF ATTEMPT HIGH: {$bot_data['description']}{$asn_text}", 'spoof', 'log-spoof-attempt');
+                        $this->block_ip($ip, "SPOOF ATTEMPT HIGH: {$bot_name}", $bot_name, 'verification_failed', 'spoof_bot');
+                    } else {
+                        $this->log_json($ip, "rejected - " . strtoupper($risk) . " risk: {$bot_data['description']}{$asn_text}", 'rejected', 'log-blocked');
                     }
+                    set_transient($cache_key, false, HOUR_IN_SECONDS);
                     return false;
                 }
                 
@@ -981,8 +1344,9 @@ private function get_cart_interacting_bot($ip, $user_agent) {
             }
         }
     }
-    
-    return false;
+}
+
+return false;
 }
 
 // =============================================
@@ -1333,7 +1697,7 @@ private function log_bot_detection($ip, $bot_name, $agent, $method) {
         $short_agent .= '...';
     }
     
-    $this->log_action($ip, strtoupper($bot_name) . " bot detected - {$short_agent} ({$method_text})");
+    $this->log_json($ip, strtoupper($bot_name) . " bot detected - {$short_agent} ({$method_text})", 'bot_detected', 'log-cart-bot');
 }
 
     private function get_facebook_ip_ranges() {
@@ -1647,10 +2011,19 @@ private function log_bot_detection($ip, $bot_name, $agent, $method) {
 
 public function update_all_bot_ip_ranges($source = 'cron') {
     if ($source === 'manual') {
-        $this->log_action('SYSTEM', __('Starting manual update of all bot IP ranges...', 'bot-killer'));
+        $this->log_json('SYSTEM', 'Starting manual update of all bot IP ranges...', 'system', 'log-default');
     } else {
-        $this->log_action('SYSTEM', __('Starting weekly update of all bot IP ranges...', 'bot-killer'));
+        $this->log_json('SYSTEM', 'Starting weekly update of all bot IP ranges...', 'system', 'log-default');
     }
+    
+    // Cloudflare
+    $this->update_cloudflare_ips($source);
+    
+    // Google & Bing
+    $this->google_ips = $this->fetch_google_ips($source);
+    $this->bing_ips = $this->fetch_bing_ips($source);
+    set_transient('bot_killer_google_ips_v2', $this->google_ips, WEEK_IN_SECONDS);
+    set_transient('bot_killer_bing_ips_v2', $this->bing_ips, WEEK_IN_SECONDS);
     
     // Existing methods
     $this->get_facebook_ip_ranges();
@@ -1686,9 +2059,9 @@ public function update_all_bot_ip_ranges($source = 'cron') {
     $this->get_petalbot_ip_ranges();
     
     if ($source === 'manual') {
-        $this->log_action('SYSTEM', __('Manual update of all bot IP ranges completed.', 'bot-killer'));
+        $this->log_json('SYSTEM', 'Manual update of all bot IP ranges completed.', 'system', 'log-default');
     } else {
-        $this->log_action('SYSTEM', __('Weekly update of all bot IP ranges completed.', 'bot-killer'));
+        $this->log_json('SYSTEM', 'Weekly update of all bot IP ranges completed.', 'system', 'log-default');
     }
 }
 
@@ -1706,26 +2079,22 @@ private function unblock_ip($ip) {
     $this->remove_block_meta($ip);
     
     // Clear cache
-    wp_cache_delete('bot_killer_blocklist');
+    wp_cache_delete('bot_killer_blocklist', $this->cache_group);
 }
 
 
 public function update_tor_exit_nodes($source = 'cron') {
     $url = 'https://check.torproject.org/exit-addresses';
-    $response = wp_remote_get($url, [
-        'timeout' => 15,
-        'user-agent' => 'Bot Killer WordPress Plugin/' . BOTKILLER_VERSION
-    ]);
-
-    if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
-        $this->log_action('SYSTEM', 'Failed to update Tor exit nodes list - ' . ($response->get_error_message() ?? 'Unknown error'));
+    $body = $this->safe_api_request($url, ['timeout' => 15], 'tor_nodes');
+    
+    if ($body === false) {
+        $this->log_json('SYSTEM', 'Failed to update Tor exit nodes list', 'system', 'log-default');
         return false;
     }
-
-    $body = wp_remote_retrieve_body($response);
+    
     $lines = explode("\n", $body);
     $tor_ips = [];
-
+    
     foreach ($lines as $line) {
         if (strpos($line, 'ExitAddress') === 0) {
             $parts = explode(' ', $line);
@@ -1734,29 +2103,26 @@ public function update_tor_exit_nodes($source = 'cron') {
             }
         }
     }
-
+    
     if (!empty($tor_ips)) {
-        set_transient('bot_killer_tor_nodes', $tor_ips, 12 * HOUR_IN_SECONDS); // 12 hours
+        set_transient('bot_killer_tor_nodes', $tor_ips, 12 * HOUR_IN_SECONDS);
         
-        // Log based on source
         if ($source === 'manual') {
-            $this->log_action('SYSTEM', 'Tor exit nodes list manually updated. Total: ' . count($tor_ips) . ' IPs');
+            $this->log_json('SYSTEM', 'Tor exit nodes list manually updated. Total: ' . count($tor_ips) . ' IPs', 'system', 'log-default');
         } else {
-            $this->log_action('SYSTEM', 'Tor exit nodes list updated via cron. Total: ' . count($tor_ips) . ' IPs');
+            $this->log_json('SYSTEM', 'Tor exit nodes list updated via cron. Total: ' . count($tor_ips) . ' IPs', 'system', 'log-default');
         }
         
         return true;
     }
-
-    $this->log_action('SYSTEM', 'Tor exit nodes list update failed - no IPs found');
+    
+    $this->log_json('SYSTEM', 'Tor exit nodes list update failed - no IPs found', 'system', 'log-default');
     return false;
 }
 
     private function is_tor_exit_node($ip) {
         $tor_ips = get_transient('bot_killer_tor_nodes');
         if (false === $tor_ips) {
-            //$this->update_tor_exit_nodes();
-            //$tor_ips = get_transient('bot_killer_tor_nodes');
             return false;
         }
 
@@ -1995,95 +2361,98 @@ public function update_tor_exit_nodes($source = 'cron') {
         return $ip;
     }
 
-    private function ip_in_range($ip, $range) {
-        $range = trim($range);
-        if (!filter_var($ip, FILTER_VALIDATE_IP)) return false;
-        
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-            return $this->ipv6_in_range($ip, $range);
-        }
-        
-        if (strpos($range, '/') !== false) {
-            list($subnet, $mask) = explode('/', $range);
-            $mask = intval(trim($mask));
-            $subnet = trim($subnet);
-            
-            if ($mask < 0 || $mask > 32) return false;
-            
-            $ip_long = ip2long($ip);
-            $subnet_long = ip2long($subnet);
-            
-            if ($ip_long === false || $subnet_long === false) return false;
-            
-            if ($mask == 0) {
-                return true;
-            }
-            
-            $mask_long = -1 << (32 - $mask);
-            return (($ip_long & $mask_long) == ($subnet_long & $mask_long));
-            
-        } elseif (strpos($range, '-') !== false) {
-            list($start, $end) = explode('-', $range);
-            $start = trim($start);
-            $end = trim($end);
-            
-            $ip_long = ip2long($ip);
-            $start_long = ip2long($start);
-            $end_long = ip2long($end);
-            
-            if ($ip_long === false || $start_long === false || $end_long === false) return false;
-            
-            return ($ip_long >= $start_long && $ip_long <= $end_long);
-        } else {
-            return $ip === $range;
-        }
+private function ip_in_range($ip, $range) {
+    $range = trim($range);
+    if (!filter_var($ip, FILTER_VALIDATE_IP)) return false;
+    
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        return $this->ipv6_in_range($ip, $range);
     }
-
-    private function ipv6_in_range($ip, $range) {
-        if (strpos($range, '/') !== false) {
-            list($subnet, $mask) = explode('/', $range);
-            $mask = intval($mask);
-            
-            $subnet = @inet_pton($subnet);
-            $ip = @inet_pton($ip);
-            
-            if ($subnet === false || $ip === false) return false;
-            
-            if ($mask <= 0) return true;
-            if ($mask >= 128) return $ip === $subnet;
-            
-            $bytes = floor($mask / 8);
-            $bits = $mask % 8;
-            
-            for ($i = 0; $i < $bytes; $i++) {
-                if ($ip[$i] !== $subnet[$i]) return false;
-            }
-            
-            if ($bits > 0) {
-                $mask_byte = chr(0xFF << (8 - $bits));
-                return (($ip[$bytes] & $mask_byte) === ($subnet[$bytes] & $mask_byte));
-            }
-            
+    
+    if (strpos($range, '/') !== false) {
+        list($subnet, $mask) = explode('/', $range);
+        $mask = intval(trim($mask));
+        $subnet = trim($subnet);
+        
+        if ($mask < 0 || $mask > 32) return false;
+        
+        $ip_long = ip2long($ip);
+        $subnet_long = ip2long($subnet);
+        
+        if ($ip_long === false || $subnet_long === false) return false;
+        
+        if ($mask == 0) {
             return true;
         }
+        
+        $mask_long = -1 << (32 - $mask);
+        return (($ip_long & $mask_long) == ($subnet_long & $mask_long));
+        
+    } elseif (strpos($range, '-') !== false) {
+        list($start, $end) = explode('-', $range);
+        $start = trim($start);
+        $end = trim($end);
+        
+        $ip_long = ip2long($ip);
+        $start_long = ip2long($start);
+        $end_long = ip2long($end);
+        
+        if ($ip_long === false || $start_long === false || $end_long === false) return false;
+        
+        return ($ip_long >= $start_long && $ip_long <= $end_long);
+    } else {
         return $ip === $range;
     }
+}
 
-    private function get_cached_blocklist() {
-        $cached = wp_cache_get('bot_killer_blocklist');
-        if (false === $cached) {
-            $cached = [
-                'blocked' => file_exists($this->block_file) ? 
-                    file($this->block_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [],
-                'custom_block' => file_exists($this->custom_block_file) ? 
-                    file($this->custom_block_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [],
-                'whitelist' => file_exists($this->custom_white_file) ? 
-                    file($this->custom_white_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : []
-            ];
-            wp_cache_set('bot_killer_blocklist', $cached, '', 300);
+private function ipv6_in_range($ip, $range) {
+    if (strpos($range, '/') !== false) {
+        list($subnet, $mask) = explode('/', $range);
+        $mask = intval($mask);
+        
+        // Skip IPv4 ranges for IPv6 IPs
+        if (filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            return false;
         }
-        return $cached;
+        
+        $subnet = @inet_pton($subnet);
+        $ip_bin = @inet_pton($ip);
+        
+        if ($subnet === false || $ip_bin === false) return false;
+        
+        if ($mask <= 0) return true;
+        if ($mask >= 128) return $ip_bin === $subnet;
+        
+        $bytes = floor($mask / 8);
+        $bits = $mask % 8;
+        
+        for ($i = 0; $i < $bytes; $i++) {
+            if ($ip_bin[$i] !== $subnet[$i]) return false;
+        }
+        
+        if ($bits > 0) {
+            $mask_byte = chr(0xFF << (8 - $bits));
+            return (($ip_bin[$bytes] & $mask_byte) === ($subnet[$bytes] & $mask_byte));
+        }
+        
+        return true;
     }
+    return $ip === $range;
+}
+
+private function get_cached_blocklist() {
+    $cached = wp_cache_get('bot_killer_blocklist', $this->cache_group);
+    if (false === $cached) {
+        $cached = [
+            'blocked' => file_exists($this->block_file) ? 
+                file($this->block_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [],
+            'whitelist' => file_exists($this->custom_white_file) ? 
+                file($this->custom_white_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : []
+        ];
+        wp_cache_set('bot_killer_blocklist', $cached, $this->cache_group, 60);
+    }
+    return $cached;
+}
 
     private function is_ip_in_custom_whitelist($ip) {
         $blocklist = $this->get_cached_blocklist();
@@ -2098,51 +2467,93 @@ public function update_tor_exit_nodes($source = 'cron') {
         return false;
     }
 
-    private function is_ip_in_custom_blocklist($ip) {
-        $blocklist = $this->get_cached_blocklist();
-        $custom_blocks = $blocklist['custom_block'];
-        
-        foreach ($custom_blocks as $block) {
-            $block = trim($block);
-            if (strpos($block, '#') === 0) continue;
-            if (empty($block)) continue;
-            if ($this->ip_in_range($ip, $block)) return true;
-        }
+private function is_ip_in_custom_blocklist($ip) {
+    static $recursion_guard = false;
+    
+    if ($recursion_guard) {
         return false;
     }
-
-    private function get_block_meta() {
-        if (!file_exists($this->block_meta_file)) return [];
-        $content = file_get_contents($this->block_meta_file);
-        if ($content === false) return [];
-        $data = json_decode($content, true);
-        return is_array($data) ? $data : [];
-    }
-
-    private function save_block_meta($meta) {
-        file_put_contents($this->block_meta_file, wp_json_encode($meta, JSON_PRETTY_PRINT), LOCK_EX);
-        if (is_writable($this->block_meta_file)) {
-            chmod($this->block_meta_file, 0644);
+    
+    $recursion_guard = true;
+    
+    // Read file directly, no cache
+    $custom_blocks = file_exists($this->custom_block_file) ? 
+        file($this->custom_block_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [];
+    
+    $result = false;
+    
+    foreach ($custom_blocks as $block) {
+        $block = trim($block);
+        if (strpos($block, '#') === 0) continue;
+        if (empty($block)) continue;
+        if ($this->ip_in_range($ip, $block)) {
+            $result = true;
+            break;
         }
     }
+    
+    $recursion_guard = false;
+    
+    return $result;
+}
+
+private function get_block_meta() {
+    // Return cached version if available
+    if ($this->block_meta_cache !== null) {
+        return $this->block_meta_cache;
+    }
+    
+    if (!file_exists($this->block_meta_file)) {
+        $this->block_meta_cache = [];
+        return [];
+    }
+    
+    $content = file_get_contents($this->block_meta_file);
+    if ($content === false) {
+        $this->block_meta_cache = [];
+        return [];
+    }
+    
+    $data = json_decode($content, true);
+    $this->block_meta_cache = is_array($data) ? $data : [];
+    return $this->block_meta_cache;
+}
+
+private function save_block_meta($meta) {
+    file_put_contents($this->block_meta_file, wp_json_encode($meta, JSON_PRETTY_PRINT), LOCK_EX);
+    if (is_writable($this->block_meta_file)) {
+        chmod($this->block_meta_file, 0644);
+    }
+    // Update cache
+    $this->block_meta_cache = $meta;
+}
 
 // Method add_block_meta() - STORE GEOIP
-private function add_block_meta($ip, $reason) {
+private function add_block_meta($ip, $reason, $bot_name = null, $verification_method = null, $block_source = null) {
     $meta = $this->get_block_meta();
     $block_time = time();
     $unblock_hours = get_option('bot_killer_unblock_hours', 24);
     $unblock_time = $block_time + ($unblock_hours * 3600);
     
-    // THIS NEEDS TO REMAIN - GeoIP is stored once when blocking
     $geo = $this->get_geo_location($ip);
     
+    $asn_info = $this->get_asn_for_ip($ip);
+    $asn = $asn_info ? $asn_info['asn'] : null;
+    $as_name = $asn_info ? $asn_info['as_name'] : null;
+    
     $meta[$ip] = [
-        'blocked_at' => $block_time, 
-        'blocked_at_readable' => $this->get_current_time(), 
-        'unblock_at' => $unblock_time, 
-        'unblock_at_readable' => date('Y-m-d H:i:s', $unblock_time), 
-        'reason' => $reason, 
-        'geo' => $geo  // ← GeoIP is stored in meta
+        'blocked_at' => $block_time,
+        'blocked_at_readable' => $this->get_current_time(),
+        'unblock_at' => $unblock_time,
+        'unblock_at_readable' => date('Y-m-d H:i:s', $unblock_time),
+        'reason' => $reason,
+        'geo' => $geo,
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+        'asn' => $asn,
+        'as_name' => $as_name,
+        'bot_name' => $bot_name,
+        'verification_method' => $verification_method,
+        'block_source' => $block_source
     ];
     
     $this->save_block_meta($meta);
@@ -2150,13 +2561,13 @@ private function add_block_meta($ip, $reason) {
 }
 
 
-    private function remove_block_meta($ip) {
-        $meta = $this->get_block_meta();
-        if (isset($meta[$ip])) {
-            unset($meta[$ip]);
-            $this->save_block_meta($meta);
-        }
+private function remove_block_meta($ip) {
+    $meta = $this->get_block_meta();
+    if (isset($meta[$ip])) {
+        unset($meta[$ip]);
+        $this->save_block_meta($meta);
     }
+}
 
     private function is_prefetch_request() {
         $prefetch_headers = array(
@@ -2240,7 +2651,7 @@ private function add_block_meta($ip, $reason) {
 
     public function create_files() {
         $files = [
-            $this->log_file => "=== " . __('BOT KILLER LOG STARTED', 'bot-killer') . " at {$this->get_current_time()} ===\n================================================\n",
+            $this->log_file => "",
             $this->custom_block_file => "# " . __('Add IP ranges to block (one per line)', 'bot-killer') . "\n# " . __('Examples', 'bot-killer') . ":\n# 192.168.1.1\n# 10.0.0.0/24\n# 172.16.0.0-172.31.255.255\n# 2001:db8::/32\n",
             $this->custom_white_file => "# " . __('Add IP ranges to whitelist (one per line)', 'bot-killer') . "\n# " . __('Examples', 'bot-killer') . ":\n# 192.168.1.1\n# 10.0.0.0/24\n# 172.16.0.0-172.31.255.255\n# 2001:db8::/32\n#\n# " . __('Note: Whitelist bypasses all blocking rules', 'bot-killer') . "\n",
             $this->block_meta_file => wp_json_encode([]),
@@ -2276,7 +2687,7 @@ private function is_ip_blocked($ip) {
                 if (in_array($ip, $blocked)) {
                     $this->unblock_ip($ip);
                     if (!is_admin() && !defined('DOING_CRON')) {
-                        $this->log_action($ip, "auto-unblocked during access check (expired)");
+                        $this->log_json($ip, 'auto-unblocked during access check (expired)', 'admin_action', 'log-admin-action');
                     }
                 }
             }
@@ -2297,24 +2708,27 @@ private function is_ip_blocked($ip) {
         return "ID: {$product_id}, " . __('Price', 'bot-killer') . ": {$price_plain}";
     }
 
-private function block_ip($ip, $reason) {
+private function block_ip($ip, $reason, $bot_name = null, $verification_method = null, $block_source = null) {
+    if ($this->is_ip_in_custom_blocklist($ip)) {
+        return;
+    }
     // ========== CHECK IF IP IS CURRENTLY BEING BLOCKED ==========
     $blocking_key = 'bot_killer_blocking_' . md5($ip);
     
     // Atomic check-and-set
-    if (!wp_cache_add($blocking_key, true, '', 3)) {
+    if (!wp_cache_add($blocking_key, true, $this->cache_group, 3)) {
         return; 
     }
     
     if (get_transient($blocking_key)) {
-        return; // IP already in blocking process, skip
+        return;
     }
-    set_transient($blocking_key, true, 3); // 3 seconds
+    set_transient($blocking_key, true, 5);
     // =============================================================
     
     // Check whitelist
     if ($this->is_ip_in_custom_whitelist($ip)) {
-        $this->log_action($ip, __("whitelisted ip - not blocked", 'bot-killer'));
+        $this->log_json($ip, "whitelisted ip - not blocked", 'whitelist', 'log-whitelist');
         return;
     }
 
@@ -2333,26 +2747,34 @@ private function block_ip($ip, $reason) {
         }
     }
 
-    $this->add_block_meta($ip, $reason);
-    wp_cache_delete('bot_killer_blocklist');
+    $this->add_block_meta($ip, $reason, $bot_name, $verification_method, $block_source);
+    wp_cache_delete('bot_killer_blocklist', $this->cache_group);
     
     $unblock_hours = get_option('bot_killer_unblock_hours', 24);
 
-    $this->log_action($ip, __("ip blocked", 'bot-killer') . " - {$reason} (" . sprintf(__('auto-unblock in %s hours', 'bot-killer'), $unblock_hours) . ")");
+    $this->log_json($ip, "ip blocked - {$reason} (" . sprintf('auto-unblock in %s hours', $unblock_hours) . ")", 'blocked', 'log-blocked');
 }
 
-private function log_action($ip, $message) {
+private function log_json($ip, $message, $type, $style) {
     $this->rotate_log_if_needed();
     $current_time = $this->get_current_time();
     
     if ($ip === 'SYSTEM') {
-        $log_entry = "[{$current_time}] {$message}\n------------------------------------------------\n";
-        file_put_contents($this->log_file, $log_entry, FILE_APPEND | LOCK_EX);
+        $full_message = "[{$current_time}] {$message}";
+        $log_entry = [
+            'time' => $current_time,
+            'ip' => 'SYSTEM',
+            'message' => $full_message,
+            'type' => $type,
+            'style' => $style
+        ];
+        file_put_contents($this->log_file, json_encode($log_entry) . "\n", FILE_APPEND | LOCK_EX);
         return;
     }
     
     $geo = null;
     $location = '';
+    $cloudflare = false;
     
     // If IP is in blocklist - use saved data, don't make new request
     if ($this->is_ip_blocked($ip) || $this->is_ip_in_custom_blocklist($ip)) {
@@ -2367,59 +2789,89 @@ private function log_action($ip, $message) {
         $geo = $this->get_geo_location($ip);
     }
     
+    // Build location string
+    if ($geo && is_array($geo) && isset($geo['country_code'])) {
+        $city = !empty($geo['city']) ? $geo['city'] : 'unknown';
+        $location = ' [' . $geo['country_code'] . ' - ' . $city . ']';
+    }
+    
     // Cloudflare detection
-    $cloudflare_suffix = '';
     if (isset($_SERVER['HTTP_CF_CONNECTING_IP'])) {
         $proxy_ip = $_SERVER['REMOTE_ADDR'];
-        $is_cloudflare = false;
-        
         if (!empty($this->cloudflare_ips)) {
             foreach ($this->cloudflare_ips['v4'] as $range) {
                 if ($this->ip_in_range($proxy_ip, $range)) { 
-                    $is_cloudflare = true; 
+                    $cloudflare = true; 
                     break; 
                 }
             }
-            if (!$is_cloudflare) {
+            if (!$cloudflare) {
                 foreach ($this->cloudflare_ips['v6'] as $range) {
                     if ($this->ip_in_range($proxy_ip, $range)) { 
-                        $is_cloudflare = true; 
+                        $cloudflare = true; 
                         break; 
                     }
                 }
             }
         }
-        
-        if ($is_cloudflare) {
-            $cloudflare_suffix = ' - Cloudflare';
-        }
     }
     
-    if ($geo && is_array($geo) && isset($geo['country_code'])) {
-        $city = !empty($geo['city']) ? $geo['city'] : __('unknown', 'bot-killer');
-        $location = ' [' . $geo['country_code'] . ' - ' . $city . $cloudflare_suffix . ']';
+    if ($cloudflare) {
+        $location .= ' - Cloudflare';
     }
     
-    $log_entry = "[{$current_time}] ip: {$ip}{$location} | {$message}\n------------------------------------------------\n";
-    file_put_contents($this->log_file, $log_entry, FILE_APPEND | LOCK_EX);
+    // Build full message exactly as before
+    $full_message = "[{$current_time}] ip: {$ip}{$location} | {$message}";
+    
+    $log_entry = [
+        'time' => $current_time,
+        'ip' => $ip,
+        'message' => $full_message,
+        'type' => $type,
+        'style' => $style
+    ];
+    
+    if ($geo && is_array($geo)) {
+        $log_entry['country'] = $geo['country_code'] ?? null;
+        $log_entry['city'] = $geo['city'] ?? null;
+    }
+    
+    if ($cloudflare) {
+        $log_entry['cloudflare'] = true;
+    }
+    
+    if ($this->is_ip_in_custom_blocklist($ip)) {
+        $log_entry['blocklist_type'] = 'custom';
+    } elseif ($this->is_ip_blocked($ip)) {
+        $log_entry['blocklist_type'] = 'auto';
+    }
+    
+    file_put_contents($this->log_file, json_encode($log_entry) . "\n", FILE_APPEND | LOCK_EX);
 }
 
-    public function check_if_blocked() {
-        if (is_admin() || is_user_logged_in()) return;
-        
-        $ip = $this->get_ip();
-        
-        if ($this->is_ip_blocked($ip)) {
-            $this->log_action($ip, __("access attempt blocked", 'bot-killer'));
-            if (defined('DOING_AJAX') && DOING_AJAX) {
-                wp_send_json_error(__('Access Denied - IP Blocked', 'bot-killer'));
-                wp_die();
-            }
-            add_action('wp', function() {
-                wp_die(__('Access Denied - Your IP has been blocked due to suspicious activity.', 'bot-killer'), __('Blocked', 'bot-killer'), array('response' => 403));
-            });
-        }
+public function check_if_blocked() {
+    if (is_admin() || is_user_logged_in()) return;
+    
+    $ip = $this->get_ip();
+    
+    // Early check using blocking_key
+    $blocking_key = 'bot_killer_blocking_' . md5($ip);
+    if (get_transient($blocking_key)) {
+        wp_die(__('Access Denied - Your IP has been blocked due to suspicious activity.', 'bot-killer'), __('Blocked', 'bot-killer'), array('response' => 403));
     }
+    
+    if ($this->is_ip_blocked($ip)) {
+        //$this->log_json($ip, "access attempt blocked", 'blocked', 'log-blocked');
+        $this->log_json($ip, "blocked - IP in auto-blocked list", 'blocked', 'log-blocked');
+        if (defined('DOING_AJAX') && DOING_AJAX) {
+            wp_send_json_error(__('Access Denied - IP Blocked', 'bot-killer'));
+            wp_die();
+        }
+        add_action('wp', function() {
+            wp_die(__('Access Denied - Your IP has been blocked due to suspicious activity.', 'bot-killer'), __('Blocked', 'bot-killer'), array('response' => 403));
+        });
+    }
+}
 
     public function add_no_js_check() {
         if (is_admin() || is_user_logged_in()) return;
@@ -2440,47 +2892,6 @@ private function log_action($ip, $message) {
         
         echo '<noscript><div style="padding: 20px; text-align: center; background: #ffebee; border: 2px solid #f44336; margin: 20px; border-radius: 8px;"><p style="font-size: 16px; margin-bottom: 15px;">⚠️ ' . __('JavaScript, cookies, and referer headers are required for this site.', 'bot-killer') . '</p><a href="?bot_killer_no_js=1" style="background: #f44336; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">' . __('Continue (not recommended)', 'bot-killer') . '</a></div></noscript>';
     }
-    
-private function check_browser_integrity($ip) {
-    // Skip Googlebot (has PageRenderer)
-    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-    if (strpos($user_agent, 'Googlebot') !== false || 
-        strpos($user_agent, 'Google-PageRenderer') !== false) {
-        return true;
-    }
-    
-    $missing_features = [];
-    
-    $js_detected = get_transient('bot_killer_js_detected_' . md5($ip));
-    if (!$js_detected && !isset($_GET['bot_killer_no_js'])) {
-        $missing_features[] = 'JavaScript';
-    }
-    
-    if (empty($_COOKIE)) {
-        $missing_features[] = 'Cookies';
-    }
-    
-    if (!isset($_SERVER['HTTP_REFERER']) || empty($_SERVER['HTTP_REFERER'])) {
-        $missing_features[] = 'Referer';
-    }
-    
-    if (!empty($missing_features)) {
-        $missing_str = implode(', ', $missing_features);
-        $this->log_action($ip, "Browser integrity check failed - missing: {$missing_str}");
-        
-        $block_on_failure = get_option('bot_killer_block_browser_integrity', 1);
-        
-        if ($block_on_failure) {
-            if (count($missing_features) === 1 && $missing_features[0] === 'Referer') {
-                $this->log_action($ip, "Only referer missing - allowing");
-                return true;
-            }
-            return false;
-        }
-    }
-    
-    return true;
-}
 
 private function is_headless_browser($user_agent) {
     // Don't block Google PageRenderer
@@ -2488,6 +2899,7 @@ private function is_headless_browser($user_agent) {
         return false;
     }
     
+    // Headless detection for ALL browsers (including mobile)
     $headless_signatures = [
         'HeadlessChrome',
         'PhantomJS',
@@ -2511,69 +2923,61 @@ private function is_headless_browser($user_agent) {
     return false;
 }
 
-    public function add_js_detection() {
-        if (is_admin() || is_user_logged_in()) return;
-        
-        if (isset($_SESSION['bot_killer_js_checked'])) return;
-        $_SESSION['bot_killer_js_checked'] = true;
-        
-        $ip = $this->get_ip();
-        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        
-        $cart_bot = $this->get_cart_interacting_bot($ip, $user_agent);
-        if ($cart_bot) {
-            return;
-        }
-        
-        set_transient('bot_killer_js_detected_' . md5($ip), true, 60 * MINUTE_IN_SECONDS);
-        
-        $block_browser = get_option('bot_killer_block_browser_integrity', 1);
-        
-        if (!$block_browser) return;
-        
-        if ($this->is_ip_in_custom_whitelist($ip)) return;
-        
-        ?>
-        <script type="text/javascript">
-        (function() {
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '<?php echo admin_url('admin-ajax.php'); ?>', true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.onload = function() {
-                if (xhr.status === 200) console.log('Bot Killer: Browser integrity confirmed');
-            };
-            xhr.send('action=bot_killer_js_detected&nonce=<?php echo wp_create_nonce('bot_killer_js_detection'); ?>');
-        })();
-        </script>
-        <?php
+public function add_js_detection() {
+    if (is_admin() || is_user_logged_in()) return;
+    
+    $this->maybe_start_session();
+    
+    if (isset($_SESSION['bot_killer_js_checked'])) {
+        return;
     }
+    
+    $_SESSION['bot_killer_js_checked'] = true;
+    
+    $ip = $this->get_ip();
+    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    
+    $cart_bot = $this->get_cart_interacting_bot($ip, $user_agent);
+    if ($cart_bot) {
+        return;
+    }
+    
+    // Set JS cookie via JavaScript
+    ?>
+    <script type="text/javascript">
+    (function() {
+        // Set JS cookie
+        document.cookie = "bot_killer_js=1; path=/; max-age=3600";
+        
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '<?php echo admin_url('admin-ajax.php'); ?>', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onload = function() {
+            if (xhr.status === 200) console.log('Bot Killer: Browser integrity confirmed');
+        };
+        xhr.send('action=bot_killer_js_detected&nonce=<?php echo wp_create_nonce('bot_killer_js_detection'); ?>');
+    })();
+    </script>
+    <?php
+}
 
-    public function handle_js_detection() {
-        // Verify nonce
-        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'bot_killer_js_detection')) {
-            wp_send_json_error(__('Invalid security token', 'bot-killer'));
-            return;
-        }
-        
-        $ip = $this->get_ip();
-        
-        if (!$this->check_rate_limit($ip, 'js_detection')) {
-            wp_send_json_error(__('Rate limit exceeded', 'bot-killer'));
-            return;
-        }
-        
-        set_transient('bot_killer_js_detected_' . md5($ip), true, 30 * MINUTE_IN_SECONDS);
-        
-        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        $cart_bot = $this->get_cart_interacting_bot($ip, $user_agent);
-        
-        if ($cart_bot || $this->is_ip_in_custom_whitelist($ip)) {
-            wp_send_json_success('skipped');
-            return;
-        }
-        
-        wp_send_json_success('js_detected');
+public function handle_js_detection() {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'bot_killer_js_detection')) {
+        wp_send_json_error(__('Invalid security token', 'bot-killer'));
+        return;
     }
+    
+    $ip = $this->get_ip();
+    
+    if (!$this->check_rate_limit($ip, 'js_detection')) {
+        wp_send_json_error(__('Rate limit exceeded', 'bot-killer'));
+        return;
+    }
+    
+    // JS cookie is already set by JavaScript, just confirm
+    wp_send_json_success('js_detected');
+}
 
     private function check_different_products_rule($ip, $product_id) {
         return true; // Rule removed
@@ -2670,14 +3074,14 @@ private function is_headless_browser($user_agent) {
                 if ($type_matched && $time_span < $custom_seconds) {
                     $type_text = $this->get_custom_rule_type_text($custom_type);
                     $this->block_ip($ip, sprintf(
-                        __("custom rule (%s): %d %s in %ds (actual: %d in %s)", 'bot-killer'),
-                        $type_text,
-                        $custom_attempts,
-                        ($custom_type == 0 ? 'same products' : 'different products'),
-                        $custom_seconds,
-                        $actual_count,
-                        $time_str
-                    ) . " - " . $product_info);
+    "custom rule (%s): %d %s in %ds (actual: %d in %s)",
+    $type_text,
+    $custom_attempts,
+    ($custom_type == 0 ? 'same products' : 'different products'),
+    $custom_seconds,
+    $actual_count,
+    $time_str
+) . " - " . $product_info, null, 'custom_rule_match', 'custom_rule');
                     
                     wc_add_notice(__('Access Denied - Too many attempts'), 'error');
                     return false;
@@ -2699,7 +3103,35 @@ private function is_headless_browser($user_agent) {
         }
     }
 
+private function get_custom_blocklist_once() {
+    // Force load custom blocklist into cache
+    $this->get_cached_blocklist();
+}
+
 public function track_and_block($passed, $product_id, $quantity) {
+    
+    $ip = $this->get_ip();
+    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $is_mobile = $this->is_mobile_browser($user_agent);
+       
+    // ========== FORCE LOAD CUSTOM BLOCKLIST ==========
+    $this->get_custom_blocklist_once();
+    // =================================================
+    
+    // ========== EARLY BLOCK CHECK ==========
+    $blocking_key = 'bot_killer_blocking_' . md5($ip);
+    if (get_transient($blocking_key)) {
+        wc_add_notice(__('Access Denied - IP Blocked'), 'error');
+        return false;
+    }
+    // =======================================
+    
+    // Debug mode
+    $debug = get_option('bot_killer_debug_mode', 0);
+    if ($debug) {
+        $this->log_json($ip, "DEBUG: track_and_block() START", 'system', 'log-default');
+    }
+    
     // Allow logged-in users
     if (is_user_logged_in()) {
         $product = wc_get_product($product_id);
@@ -2708,20 +3140,14 @@ public function track_and_block($passed, $product_id, $quantity) {
             return false;
         }
         
-        $ip = $this->get_ip();
         $product_price = $product->get_price();
         
         $user = wp_get_current_user();
         $is_admin = in_array('administrator', $user->roles) || in_array('shop_manager', $user->roles);
         $admin_suffix = $is_admin ? ' [ADMIN]' : '';
+        $mobile_suffix = $is_mobile ? ' [MOBILE]' : '';
         
-        $this->log_action($ip, sprintf(
-            "ADD TO CART - Product ID: %d, Qty: %d, Price: %s%s",
-            $product_id,
-            $quantity,
-            $product_price,
-            $admin_suffix
-        ));
+        $this->log_json($ip, sprintf("ADD TO CART - Product ID: %d, Qty: %d, Price: %s%s%s", $product_id, $quantity, $product_price, $admin_suffix, $mobile_suffix), 'add_to_cart', 'log-add-to-cart');
         
         return $passed;
     }
@@ -2776,18 +3202,43 @@ public function track_and_block($passed, $product_id, $quantity) {
     // PRIORITY 1: WHITELIST - Highest priority
     // =============================================
     if ($this->is_ip_in_custom_whitelist($ip)) {
-        $this->log_action($ip, __("whitelisted ip - activity allowed"));
+        $this->log_json($ip, "whitelisted ip - activity allowed", 'whitelist', 'log-whitelist');
         return $passed;
     }
 
-    // PRIORITY 1.5: CHECK IF ALREADY BLOCKED
+    // =============================================
+    // PRIORITY 2: CUSTOM BLOCKLIST
+    // =============================================
+    if ($this->is_ip_in_custom_blocklist($ip)) {
+        
+        $this->block_ip($ip, 'CUSTOM BLOCKLIST', null, 'custom_blocklist', 'custom');
+    
+        wc_add_notice(__('Access Denied - IP Blocked'), 'error');
+    
+        $this->log_json($ip, "blocked - IP in custom list", 'blocked', 'log-blocked');
+    
+        return false;
+    }    
+
+    // =============================================
+    // PRIORITY 3: AUTO-BLOCKED
+    // =============================================
     if ($this->is_ip_blocked($ip)) {
         wc_add_notice(__('Access Denied - IP Blocked'), 'error');
         return false;
     }
     
     // =============================================
-    // PRIORITY 2: VERIFIED BOTS - Bypass ALL other checks
+    // PRIORITY 3a: UA ROTATION DETECTION
+    // =============================================
+    if ($this->check_ua_rotation($ip, $user_agent)) {
+        $this->block_ip($ip, "UA rotation detected - bot behavior", null, 'ua_rotation_detected', 'ua_rotation');
+        wc_add_notice(__('Access Denied - Suspicious activity detected'), 'error');
+        return false;
+    }
+    
+    // =============================================
+    // PRIORITY 4: VERIFIED BOTS - Bypass ALL other checks
     // =============================================
     $cart_bot = false;
     $verification_method = '';
@@ -2803,24 +3254,8 @@ public function track_and_block($passed, $product_id, $quantity) {
         $hostname = $this->reverse_dns_lookup($ip, 2);
         
         if ($hostname) {
-            // Googlebot check
-            if (strpos($hostname, '.googlebot.com') !== false || strpos($hostname, '.google.com') !== false) {
-                $forward_ips = $this->forward_dns_lookup($hostname, 2);
-                if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
-                    $cart_bot = 'google';
-                    $verification_method = 'dns_forward';
-                }
-            }
-            // Bingbot check
-            elseif (strpos($hostname, '.search.msn.com') !== false) {
-                $forward_ips = $this->forward_dns_lookup($hostname, 2);
-                if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
-                    $cart_bot = 'bing';
-                    $verification_method = 'dns_forward';
-                }
-            }
             // Yandex check
-            elseif (strpos($hostname, '.yandex.ru') !== false || strpos($hostname, '.yandex.net') !== false) {
+            if (strpos($hostname, '.yandex.ru') !== false || strpos($hostname, '.yandex.net') !== false) {
                 $forward_ips = $this->forward_dns_lookup($hostname, 2);
                 if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
                     $cart_bot = 'yandex';
@@ -2862,17 +3297,6 @@ public function track_and_block($passed, $product_id, $quantity) {
                 $cart_bot = 'google';
                 $verification_method = 'ip_range';
                 break;
-            }
-        }
-        
-        if (!$cart_bot) {
-            // Bing IP ranges
-            foreach ($this->bing_ips as $range) {
-                if ($this->ip_in_range($ip, $range)) {
-                    $cart_bot = 'bing';
-                    $verification_method = 'ip_range';
-                    break;
-                }
             }
         }
         
@@ -3157,7 +3581,7 @@ public function track_and_block($passed, $product_id, $quantity) {
         if ($asn_info) {
             $asn = $asn_info['asn'];
             
-            // Bot ASN mappings
+            // Bot ASN mappings (Bing removed - handled by DNS only in get_cart_interacting_bot)
             $bot_asns = [
                 '15169' => 'google',      // Google
                 '32934' => 'facebook',    // Facebook
@@ -3165,14 +3589,7 @@ public function track_and_block($passed, $product_id, $quantity) {
                 '209242' => 'ahrefs',     // Ahrefs
                 '203726' => 'semrush',    // Semrush
                 '204734' => 'mj12bot',    // Majestic
-                '8068' => 'bing',         // Microsoft
-                '8069' => 'bing',         // Microsoft
-                '8070' => 'bing',         // Microsoft
-                '8071' => 'bing',         // Microsoft
-                '8072' => 'bing',         // Microsoft
-                '8073' => 'bing',         // Microsoft
-                '8074' => 'bing',         // Microsoft
-                '8075' => 'bing',         // Microsoft
+                // Bing removed - requires DNS verification
                 '62041' => 'telegram',    // Telegram
                 '59930' => 'telegram',    // Telegram
                 '43037' => 'seznam',      // Seznam
@@ -3208,111 +3625,110 @@ public function track_and_block($passed, $product_id, $quantity) {
     // SINGLE LOG ENTRY using your existing log_bot_detection method
     if ($cart_bot) {
         $this->log_bot_detection($ip, $cart_bot, $user_agent, $verification_method);
-        return $passed; // Verified bots bypass everything below
+        
+        // Block social/hybrid bots on cart actions
+        $social_hybrid_bots = ['facebook', 'whatsapp', 'linkedin', 'pinterest', 'twitter', 
+                               'discord', 'slack', 'telegram', 'microsoftpreview', 'tiktok', 
+                               'openai', 'anthropic', 'perplexity', 'gemini', 'google_ai', 
+                               'bytespider', 'mistral', 'grok', 'deepseek', 'qwen', 'metaai'];
+        
+        if (in_array($cart_bot, $social_hybrid_bots)) {
+            $this->log_json($ip, "BOT ABUSE: " . strtoupper($cart_bot) . " spoof - cart manipulation detected", 'spoof', 'log-spoof-attempt');
+            $this->block_ip($ip, "BOT ABUSE: " . strtoupper($cart_bot) . " cart manipulation", $cart_bot, 'bot_abuse_detected', 'spoof_bot');
+            wc_add_notice(__('Access Denied - Suspicious activity detected'), 'error');
+            return false;
+        }
+        
+        return $passed; // Strict bots (Google, Bing, etc.) bypass everything below
     }
     
     // =============================================
-    // PRIORITY 3: BLOCKLISTS - For non-bot traffic
+    // PRIORITY 5: TOR EXIT NODES
     // =============================================
-    
-    // 3a. CUSTOM BLOCKLIST
-    if ($this->is_ip_in_custom_blocklist($ip)) {
-        wc_add_notice(__('Access Denied - IP Blocked'), 'error');
-        $this->log_action($ip, __("blocked by custom blocklist"));
-        return false;
-    }
-    
-    // 3b. AUTO-BLOCKED
-    if ($this->is_ip_blocked($ip)) {
-        wc_add_notice(__('Access Denied - IP Blocked'), 'error');
-        //$this->log_action($ip, __("blocked attempt - already in auto-block list"));
-        return false;
-    }
-    
-    // 3c. TOR EXIT NODES
     if (get_option('bot_killer_block_tor', 1)) {
         if ($this->is_tor_exit_node($ip)) {
-            $this->log_action($ip, "Tor exit node detected and blocked");
+            $this->log_json($ip, "Tor exit node detected and blocked", 'blocked', 'log-blocked');
             wc_add_notice(__('Access Denied - Anonymizer detected'), 'error');
             return false;
         }
     }
     
-    // 3d. ASN BLOCK
+    // =============================================
+    // PRIORITY 6: ASN BLOCK
+    // =============================================
     $blocked_asns = get_option('bot_killer_blocked_asns', []);
     if (!empty($blocked_asns)) {
         $asn_info = $this->get_asn_for_ip($ip);
         if ($asn_info && isset($asn_info['asn']) && in_array($asn_info['asn'], $blocked_asns)) {
-            $this->log_action($ip, "ASN {$asn_info['asn']} ({$asn_info['as_name']}) blocked");
+            $this->log_json($ip, "ASN {$asn_info['asn']} ({$asn_info['as_name']}) blocked", 'asn_blocked', 'log-asn-blocked');
             wc_add_notice(__('Access Denied - Network blocked'), 'error');
             return false;
         }
     }
     
-// =============================================
-// PRIORITY 4: BROWSER CHECKS - For non-bot traffic
-// =============================================
-
-// 4a. HEADLESS DETECTION (now first)
-if (get_option('bot_killer_block_headless', 1)) {
-    if ($this->is_headless_browser($user_agent)) {
-        $this->log_action($ip, "Headless browser detected - " . $user_agent);
-        wc_add_notice(__('Access Denied - Automated browser detected'), 'error');
+    // =============================================
+    // PRIORITY 7: HEADLESS DETECTION
+    // =============================================
+    if (get_option('bot_killer_block_headless', 1)) {
+        if ($this->is_headless_browser($user_agent)) {
+            $this->log_json($ip, "Headless browser detected - " . $user_agent, 'headless', 'log-headless');
+            wc_add_notice(__('Access Denied - Automated browser detected'), 'error');
+            return false;
+        }
+    }
+    
+    // =============================================
+    // PRIORITY 8: BROWSER INTEGRITY
+    // =============================================
+    if (!$this->check_browser_integrity_with_score($ip, $user_agent)) {
+        $this->block_ip($ip, "Browser integrity check failed", null, 'browser_integrity_failed', 'browser_integrity');
+        wc_add_notice(__('Your browser is not fully supported. Please enable JavaScript and cookies.', 'bot-killer'), 'error');
         return false;
     }
-}
-
-// 4b. BROWSER INTEGRITY (now second)
-if (!$this->check_browser_integrity($ip)) {
-    $this->block_ip($ip, "No JS/cookies/referer");
-    wc_add_notice(__('Your browser is not fully supported. Please enable JavaScript and cookies.', 'bot-killer'), 'error');
-    return false;
-}
     
-// =============================================
-// PRIORITY 5: GEO CHECKS - For non-bot traffic
-// =============================================
+    // =============================================
+    // PRIORITY 9: COUNTRY FILTER
+    // =============================================
+    // Skip if already blocked to avoid duplicate logs
+    if ($this->is_ip_blocked($ip)) {
+        return false;
+    }
 
-// 5a. COUNTRY FILTER - only if IP is not in custom block list
-$allowed_countries = get_option('bot_killer_allowed_countries', array());
-$block_unknown = get_option('bot_killer_block_unknown_country', 0);
-
-if (!empty($allowed_countries) && !$this->is_ip_in_custom_blocklist($ip)) {
-    $geo = $this->get_geo_location($ip);
-    $country_code = is_array($geo) ? ($geo['country_code'] ?? null) : null;
+    $allowed_countries = get_option('bot_killer_allowed_countries', array());
+    $block_unknown = get_option('bot_killer_block_unknown_country', 0);
     
-    if ($country_code && $country_code !== 'private') {
-        if (!in_array($country_code, $allowed_countries)) {
-            $this->log_action($ip, sprintf(__("blocked - country %s not allowed"), $country_code));
-            wc_add_notice(__('Purchases are only available from selected countries'), 'error');
-            return false;
-        }
-    } else {
-        if ($block_unknown) {
-            $this->log_action($ip, __("blocked - unknown country"));
-            wc_add_notice(__('Unable to verify your location'), 'error');
-            return false;
+    if (!empty($allowed_countries) && !$this->is_ip_in_custom_blocklist($ip)) {
+        $geo = $this->get_geo_location($ip);
+        $country_code = is_array($geo) ? ($geo['country_code'] ?? null) : null;
+        
+        if ($country_code && $country_code !== 'private') {
+            if (!in_array($country_code, $allowed_countries)) {
+                $this->log_json($ip, sprintf("rejected - country %s not allowed", $country_code), 'rejected', 'log-blocked');
+                wc_add_notice(__('Purchases are only available from selected countries'), 'error');
+                return false;
+            }
+        } else {
+            if ($block_unknown) {
+                $this->log_json($ip, "blocked - unknown country", 'blocked', 'log-blocked');
+                wc_add_notice(__('Unable to verify your location'), 'error');
+                return false;
+            }
         }
     }
-}
     
     // =============================================
-    // PRIORITY 6: PRODUCT CHECKS - For non-bot traffic
+    // PRIORITY 10: OUT OF STOCK
     // =============================================
-    
-    // 6a. OUT-OF-STOCK CHECK
     $block_out_of_stock = get_option('bot_killer_block_out_of_stock', 1);
     if ($block_out_of_stock && !$product->is_in_stock()) {
-        $this->block_ip($ip, __("Attempt to add out-of-stock product"));
+        $this->block_ip($ip, __("Attempt to add out-of-stock product"), null, 'out_of_stock_attempt', 'out_of_stock');
         wc_add_notice(__('This product is out of stock'), 'error');
         return false;
     }
     
     // =============================================
-    // PRIORITY 7: RATE LIMITING RULES - Custom Rules only
+    // PRIORITY 11: CUSTOM RULES
     // =============================================
-    
-    // 7a. CUSTOM RULES (Rule 4)
     $transient_key = 'bot_killer_' . md5($product_id . '_' . $ip);
     $session_data = get_transient($transient_key);
     
@@ -3358,7 +3774,6 @@ if (!empty($allowed_countries) && !$this->is_ip_in_custom_blocklist($ip)) {
         $session_data['last_time'] = $last_time;
         set_transient($transient_key, $session_data, $expiration);
         
-        // Custom Rules only
         if (!$this->check_custom_rules($ip, $product_id, $count, $time_span, $time_str, $this->get_product_info($product_id))) {
             return false;
         }
@@ -3377,15 +3792,9 @@ if (!empty($allowed_countries) && !$this->is_ip_in_custom_blocklist($ip)) {
     
     $admin_suffix = $is_admin ? ' [ADMIN]' : '';
     $cloudflare_suffix = $is_cloudflare ? ' [CF]' : '';
+    $mobile_suffix = $is_mobile ? ' [MOBILE]' : '';
     
-    $this->log_action($ip, sprintf(
-        "ADD TO CART - Product ID: %d, Qty: %d, Price: %s%s%s",
-        $product_id,
-        $quantity,
-        $product_price,
-        $admin_suffix,
-        $cloudflare_suffix
-    ));
+    $this->log_json($ip, sprintf("ADD TO CART - Product ID: %d, Qty: %d, Price: %s%s%s%s", $product_id, $quantity, $product_price, $admin_suffix, $cloudflare_suffix, $mobile_suffix), 'add_to_cart', 'log-add-to-cart');
     
     return $passed;
 }
@@ -3399,51 +3808,77 @@ public function track_order($order_id) {
     $order = wc_get_order($order_id);
     if (!$order) return;
     
+    $order_date = $order->get_date_created();
+    $order_timestamp = $order_date ? $order_date->getTimestamp() : 0;
+    $current_time = time();
+    $max_age = 24 * HOUR_IN_SECONDS;
+    
+    if ($current_time - $order_timestamp > $max_age) {
+        update_post_meta($order_id, '_bot_killer_logged', true);
+        return;
+    }
+    
     $ip = $this->get_ip();
+    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $is_mobile = $this->is_mobile_browser($user_agent, $ip);
+    $mobile_suffix = $is_mobile ? ' [MOBILE]' : '';
     
     // Detect if request came through Cloudflare
-    $cloudflare_suffix = '';
+    $cloudflare = false;
     if (isset($_SERVER['HTTP_CF_CONNECTING_IP'])) {
         $proxy_ip = $_SERVER['REMOTE_ADDR'];
-        $is_cloudflare = false;
-        
-        foreach ($this->cloudflare_ips['v4'] as $range) {
-            if ($this->ip_in_range($proxy_ip, $range)) { 
-                $is_cloudflare = true; 
-                break; 
-            }
-        }
-        if (!$is_cloudflare) {
-            foreach ($this->cloudflare_ips['v6'] as $range) {
+        if (!empty($this->cloudflare_ips)) {
+            foreach ($this->cloudflare_ips['v4'] as $range) {
                 if ($this->ip_in_range($proxy_ip, $range)) { 
-                    $is_cloudflare = true; 
+                    $cloudflare = true; 
                     break; 
                 }
             }
-        }
-        if ($is_cloudflare) {
-            $cloudflare_suffix = ' - Cloudflare';
+            if (!$cloudflare) {
+                foreach ($this->cloudflare_ips['v6'] as $range) {
+                    if ($this->ip_in_range($proxy_ip, $range)) { 
+                        $cloudflare = true; 
+                        break; 
+                    }
+                }
+            }
         }
     }
     
     $total = $order->get_total();
     $item_count = $order->get_item_count();
     
-    $this->log_action($ip, sprintf(
-        "PURCHASE - Order #%d: %d items, Total: %s%s",
-        $order_id,
-        $item_count,
-        $total,
-        $cloudflare_suffix
-    ));
+    $message = sprintf("PURCHASE - Order #%d: %d items, Total: %s%s", $order_id, $item_count, $total, $mobile_suffix);
+    if ($cloudflare) {
+        $message .= " - Cloudflare";
+    }
+    
+    $this->log_json($ip, $message, 'purchase', 'log-purchase');
     
     update_post_meta($order_id, '_bot_killer_logged', true);
 }
 
 public function track_remove_from_cart($cart_item_key, $cart) {
-    if (is_admin() || !function_exists('wc_get_product')) {
+    // Allow AJAX requests (cart updates via frontend)
+    if ((is_admin() && !defined('DOING_AJAX')) || !function_exists('wc_get_product')) {
         return;
     }
+    
+    $ip = $this->get_ip();
+    $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    
+    // ========== CHECK CUSTOM BLOCKLIST ==========
+    if ($this->is_ip_in_custom_blocklist($ip)) {
+        $this->log_json($ip, "blocked - IP in custom list", 'blocked', 'log-blocked');
+        return;
+    }
+    
+    // ========== CHECK AUTO-BLOCKED ==========
+    if ($this->is_ip_blocked($ip)) {
+        $this->log_json($ip, "blocked - IP in auto-blocked list", 'blocked', 'log-blocked');
+        return;
+    }
+
     
     $cart_item = $cart->removed_cart_contents[$cart_item_key] ?? null;
     if (!$cart_item) {
@@ -3452,7 +3887,11 @@ public function track_remove_from_cart($cart_item_key, $cart) {
     
     $product_id = $cart_item['product_id'];
     $quantity = $cart_item['quantity'];
-    $ip = $this->get_ip();
+    
+    // ========== CHECK REMOVE CUSTOM RULES ==========
+    if (!$this->check_remove_custom_rules($ip, $product_id)) {
+        return;
+    }
     
     $product = wc_get_product($product_id);
     if (!$product) {
@@ -3470,14 +3909,10 @@ public function track_remove_from_cart($cart_item_key, $cart) {
     }
     
     $admin_suffix = $is_admin ? ' [ADMIN]' : '';
+    $is_mobile = $this->is_mobile_browser($user_agent);
+    $mobile_suffix = $is_mobile ? ' [MOBILE]' : '';
     
-    $this->log_action($ip, sprintf(
-        "REMOVE FROM CART - Product ID: %d, Qty: %d, Price: %s%s",
-        $product_id,
-        $quantity,
-        $product_price,
-        $admin_suffix
-    ));
+    $this->log_json($ip, sprintf("REMOVE FROM CART - Product ID: %d, Qty: %d, Price: %s%s%s", $product_id, $quantity, $product_price, $admin_suffix, $mobile_suffix), 'remove_cart', 'log-remove-cart');
 }
 
     public function cleanup_expired_blocks() {
@@ -3503,7 +3938,7 @@ public function track_remove_from_cart($cart_item_key, $cart) {
                     unset($meta[$ip]);
                     $changed = true;
                     $unblocked_count++;
-                    $this->log_action($ip, __("auto-unblocked after", 'bot-killer') . " {$unblock_hours} " . __('hours', 'bot-killer'));
+                    $this->log_json($ip, "auto-unblocked after {$unblock_hours} hours.", 'admin_action', 'log-admin-action');
                 } else {
                     $new_blocked[] = $ip;
                 }
@@ -3524,7 +3959,7 @@ public function track_remove_from_cart($cart_item_key, $cart) {
         
         if ($changed) {
             $this->save_block_meta($meta);
-            wp_cache_delete('bot_killer_blocklist');
+            wp_cache_delete('bot_killer_blocklist', $this->cache_group);
         }
     }
 
@@ -3554,17 +3989,65 @@ public function register_settings() {
         'bot_killer_block_headless' => ['sanitize_callback' => 'intval'],
         'bot_killer_block_tor' => ['sanitize_callback' => 'intval'],
         'bot_killer_blocked_asns' => ['sanitize_callback' => [$this, 'sanitize_asn_list']],
+        'bot_killer_ua_rotation_enabled' => ['sanitize_callback' => 'intval'],
+        'bot_killer_ua_rotation_limit' => ['sanitize_callback' => 'intval'],
+        'bot_killer_ua_rotation_window' => ['sanitize_callback' => 'intval'],
+        'bot_killer_debug_mode' => ['sanitize_callback' => 'intval'],
+        'bot_killer_auto_clean_blocklist' => ['sanitize_callback' => 'intval'],
+        'bot_killer_remove_rules_enabled' => ['sanitize_callback' => 'intval'],
+        'bot_killer_remove_rules' => ['sanitize_callback' => [$this, 'sanitize_remove_rules']],
     ];
     
     foreach ($settings as $setting => $args) {
         register_setting('bot_killer_settings', $setting, $args);
     }
 }
+
+public function sanitize_remove_rules($value) {
+    if (empty($value)) {
+        return "# 5 remove actions in 5 seconds\n5,5,2";
+    }
     
+    $lines = explode("\n", $value);
+    $clean_lines = [];
+    
+    foreach ($lines as $line) {
+        $line = trim($line);
+        
+        if (strpos($line, '#') === 0) {
+            $clean_lines[] = $line;
+            continue;
+        }
+        
+        if (empty($line)) {
+            $clean_lines[] = '';
+            continue;
+        }
+        
+        $parts = explode(',', $line);
+        $parts = array_map('trim', $parts);
+        
+        if (count($parts) >= 2) {
+            $attempts = intval($parts[0]);
+            $seconds = intval($parts[1]);
+            $type = isset($parts[2]) ? intval($parts[2]) : 2;
+            
+            if ($attempts >= 2 && $attempts <= 100 && 
+                $seconds >= 3 && $seconds <= 86400 &&
+                in_array($type, [0, 1, 2])) {
+                
+                $clean_lines[] = $attempts . ',' . $seconds . ',' . $type;
+            }
+        }
+    }
+    
+    return implode("\n", $clean_lines);
+}
+
 public function sanitize_custom_rules($value) {
     if (empty($value)) {
         // Return default rules if empty
-        return "# 2 same products in 5 seconds\n2,5,0\n\n# 3 same products in 5 minutes\n3,300,0\n\n# 2 different products in 5 seconds\n2,5,1";
+        return "# 2 same products in 5 seconds\n2,5,0\n# 3 same products in 5 minutes\n3,300,0\n# 2 different products in 5 seconds\n2,5,1";
     }
     
     $lines = explode("\n", $value);
@@ -3715,6 +4198,25 @@ public function settings_page() {
     if (!current_user_can('manage_options')) {
         wp_die(__('You do not have sufficient permissions to access this page.', 'bot-killer'));
     }
+
+// Handle Remove Rules save
+if (isset($_POST['save_remove_rules']) && check_admin_referer('bot_killer_remove_rules')) {
+    if (isset($_POST['bot_killer_remove_rules_enabled'])) {
+        update_option('bot_killer_remove_rules_enabled', intval($_POST['bot_killer_remove_rules_enabled']));
+    } else {
+        update_option('bot_killer_remove_rules_enabled', 0);
+    }
+    
+    if (isset($_POST['bot_killer_remove_rules'])) {
+        $rules = wp_unslash($_POST['bot_killer_remove_rules']);
+        $rules = sanitize_textarea_field($rules);
+        update_option('bot_killer_remove_rules', $rules);
+    }
+    
+    echo '<div class="notice notice-success is-dismissible"><p>' . 
+         __('Remove rules saved successfully!', 'bot-killer') . 
+         '</p></div>';
+}
     
     // Handle Blocklist save
     if (isset($_POST['save_blocklist']) && check_admin_referer('bot_killer_ip_lists')) {
@@ -3749,7 +4251,7 @@ public function settings_page() {
                 chmod($this->custom_block_file, 0644);
             }
             
-            wp_cache_delete('bot_killer_blocklist');
+            wp_cache_delete('bot_killer_blocklist', $this->cache_group);
             
             echo '<div class="notice notice-success is-dismissible"><p>' . 
                  sprintf(__('Blocklist saved successfully! %d entries stored.', 'bot-killer'), count($valid_lines)) . 
@@ -3790,7 +4292,7 @@ public function settings_page() {
                 chmod($this->custom_white_file, 0644);
             }
             
-            wp_cache_delete('bot_killer_blocklist');
+            wp_cache_delete('bot_killer_blocklist', $this->cache_group);
             
             echo '<div class="notice notice-success is-dismissible"><p>' . 
                  sprintf(__('Whitelist saved successfully! %d entries stored.', 'bot-killer'), count($valid_lines)) . 
@@ -3841,7 +4343,9 @@ if (isset($_POST['save_asn_list']) && check_admin_referer('bot_killer_asn_action
         $blocked_asns = $clean_asns;
     }
 }
-    
+
+
+
     // Handle combined save (for backward compatibility)
     if (isset($_POST['save_ip_lists']) && check_admin_referer('bot_killer_ip_lists')) {
         // Blocklist
@@ -3919,7 +4423,7 @@ if (isset($_POST['save_asn_list']) && check_admin_referer('bot_killer_asn_action
             update_option('bot_killer_asn_last_updated', time());
         }
         
-        wp_cache_delete('bot_killer_blocklist');
+        wp_cache_delete('bot_killer_blocklist', $this->cache_group);
         
         echo '<div class="notice notice-success is-dismissible"><p>' . 
              __('IP lists and ASN list saved successfully!', 'bot-killer') . 
@@ -3995,105 +4499,124 @@ if (isset($_POST['save_asn_list']) && check_admin_referer('bot_killer_asn_action
     include BOTKILLER_PLUGIN_DIR . 'includes/views/admin-settings.php';
 }
 
-    public function admin_page() {
-        if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have sufficient permissions to access this page.', 'bot-killer'));
-        }
-        
-        $this->timezone_offset = get_option('bot_killer_timezone', '+02:00');
-        $this->set_timezone();
-        $this->maybe_cleanup_expired_blocks();
-        
-        if (isset($_POST['unblock_ip']) && check_admin_referer('unblock_action')) {
-            $ip_to_unblock = sanitize_text_field($_POST['unblock_ip']);
-            if (file_exists($this->block_file)) {
-                $blocked = file($this->block_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-                if ($blocked !== false) {
-                    $blocked = array_diff($blocked, array($ip_to_unblock));
-                    file_put_contents($this->block_file, implode("\n", $blocked) . "\n", LOCK_EX);
-                    if (is_writable($this->block_file)) {
-                        chmod($this->block_file, 0644);
-                    }
-                }
-                $this->remove_block_meta($ip_to_unblock);
-                $this->log_action($ip_to_unblock, __("manually unblocked by admin", 'bot-killer'));
-                wp_cache_delete('bot_killer_blocklist');
-                echo '<div class="notice notice-success"><p>' . sprintf(__('ip %s unblocked!', 'bot-killer'), esc_html($ip_to_unblock)) . '</p></div>';
-            }
-        }
-        
-        if (isset($_POST['clear_all']) && check_admin_referer('clear_all')) {
-            file_put_contents($this->block_file, "", LOCK_EX);
+public function admin_page() {
+    if (!current_user_can('manage_options')) {
+        wp_die(__('You do not have sufficient permissions to access this page.', 'bot-killer'));
+    }
+    
+    $this->timezone_offset = get_option('bot_killer_timezone', '+02:00');
+    $this->set_timezone();
+    $this->maybe_cleanup_expired_blocks();
+    
+if (isset($_POST['unblock_ip']) && check_admin_referer('unblock_action')) {
+    $ip_to_unblock = sanitize_text_field($_POST['unblock_ip']);
+    if (file_exists($this->block_file)) {
+        $blocked = file($this->block_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($blocked !== false) {
+            $blocked = array_diff($blocked, array($ip_to_unblock));
+            file_put_contents($this->block_file, implode("\n", $blocked) . "\n", LOCK_EX);
             if (is_writable($this->block_file)) {
                 chmod($this->block_file, 0644);
             }
-            file_put_contents($this->block_meta_file, wp_json_encode([]), LOCK_EX);
-            if (is_writable($this->block_meta_file)) {
-                chmod($this->block_meta_file, 0644);
-            }
-            $this->log_action("ALL", __("all auto-blocked ips manually cleared by admin", 'bot-killer'));
-            wp_cache_delete('bot_killer_blocklist');
-            echo '<div class="notice notice-success"><p>' . __('all auto-blocked ips unblocked!', 'bot-killer') . '</p></div>';
         }
         
-        if (isset($_POST['clear_log']) && check_admin_referer('clear_log')) {
-            $clear_time = $this->get_current_time();
-            $header = "=== " . __('LOG CLEARED', 'bot-killer') . " at {$clear_time} ===\n================================================\n";
-            file_put_contents($this->log_file, $header, LOCK_EX);
-            if (is_writable($this->log_file)) {
-                chmod($this->log_file, 0644);
-            }
-            echo '<div class="notice notice-success"><p>' . __('log cleared!', 'bot-killer') . '</p></div>';
-        }
-        
-        $blocked_ips = file_exists($this->block_file) ? file($this->block_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : array();
-        if ($blocked_ips === false) $blocked_ips = array();
+        // Get block meta before removing
         $block_meta = $this->get_block_meta();
+        $blocked_time = isset($block_meta[$ip_to_unblock]['blocked_at_readable']) ? $block_meta[$ip_to_unblock]['blocked_at_readable'] : 'unknown';
         
-        $blocked_asns = get_option('bot_killer_blocked_asns', []);
-        
-        $custom_blocked_count = 0;
-        if (file_exists($this->custom_block_file)) {
-            $custom_blocks = file($this->custom_block_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            if ($custom_blocks !== false) {
-                foreach ($custom_blocks as $block) {
-                    if (strpos($block, '#') !== 0 && !empty(trim($block))) $custom_blocked_count++;
-                }
-            }
-        }
-        
-        $custom_whitelist_count = 0;
-        if (file_exists($this->custom_white_file)) {
-            $custom_whites = file($this->custom_white_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            if ($custom_whites !== false) {
-                foreach ($custom_whites as $white) {
-                    if (strpos($white, '#') !== 0 && !empty(trim($white))) $custom_whitelist_count++;
-                }
-            }
-        }
-        
-        $custom_rules_enabled = get_option('bot_killer_custom_rules_enabled', 0);
-        $unblock_hours = get_option('bot_killer_unblock_hours', 24);
-        $block_out_of_stock = get_option('bot_killer_block_out_of_stock', 1);
-        $block_browser_integrity = get_option('bot_killer_block_browser_integrity', 1);
-        $block_headless = get_option('bot_killer_block_headless', 1);
-        $block_tor = get_option('bot_killer_block_tor', 1);
-        // Get ASN list
-        $blocked_asns = get_option('bot_killer_blocked_asns', []);
-        
-        $block_ips = file_exists($this->custom_block_file) ? file_get_contents($this->custom_block_file) : '';
-        $white_ips = file_exists($this->custom_white_file) ? file_get_contents($this->custom_white_file) : '';
-        $allowed_countries = get_option('bot_killer_allowed_countries', array());
-        
-        $log_content = file_exists($this->log_file) ? file_get_contents($this->log_file) : __('No log yet', 'bot-killer');
-        $log_lines = explode("\n", trim($log_content));
-        $log_lines = array_reverse($log_lines);
-        $log_lines = array_slice($log_lines, 0, 600);
-        
-        include BOTKILLER_PLUGIN_DIR . 'includes/views/admin-dashboard.php';
+        $this->remove_block_meta($ip_to_unblock);
+        $this->log_json($ip_to_unblock, "manually unblocked by admin.", 'admin_action', 'log-admin-action');
+        wp_cache_delete('bot_killer_blocklist', $this->cache_group);
+        echo '<div class="notice notice-success"><p>' . sprintf(__('ip %s unblocked!', 'bot-killer'), esc_html($ip_to_unblock)) . '</p></div>';
     }
-
-
+}
+    
+    if (isset($_POST['clear_all']) && check_admin_referer('clear_all')) {
+        file_put_contents($this->block_file, "", LOCK_EX);
+        if (is_writable($this->block_file)) {
+            chmod($this->block_file, 0644);
+        }
+        file_put_contents($this->block_meta_file, wp_json_encode([]), LOCK_EX);
+        if (is_writable($this->block_meta_file)) {
+            chmod($this->block_meta_file, 0644);
+        }
+        $this->log_json("ALL", "all auto-blocked ips manually cleared by admin", 'admin_action', 'log-admin-action');
+        wp_cache_delete('bot_killer_blocklist', $this->cache_group);
+        echo '<div class="notice notice-success"><p>' . __('all auto-blocked ips unblocked!', 'bot-killer') . '</p></div>';
+    }
+    
+    if (isset($_POST['clear_log']) && check_admin_referer('clear_log')) {
+        $clear_time = $this->get_current_time();
+        file_put_contents($this->log_file, "", LOCK_EX);
+        if (is_writable($this->log_file)) {
+            chmod($this->log_file, 0644);
+        }
+        echo '<div class="notice notice-success"><p>' . __('log cleared!', 'bot-killer') . '</p></div>';
+    }
+    
+    $blocked_ips = file_exists($this->block_file) ? file($this->block_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : array();
+    if ($blocked_ips === false) $blocked_ips = array();
+    $block_meta = $this->get_block_meta();
+    
+    $blocked_asns = get_option('bot_killer_blocked_asns', []);
+    
+    $custom_blocked_count = 0;
+    if (file_exists($this->custom_block_file)) {
+        $custom_blocks = file($this->custom_block_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($custom_blocks !== false) {
+            foreach ($custom_blocks as $block) {
+                if (strpos($block, '#') !== 0 && !empty(trim($block))) $custom_blocked_count++;
+            }
+        }
+    }
+    
+    $custom_whitelist_count = 0;
+    if (file_exists($this->custom_white_file)) {
+        $custom_whites = file($this->custom_white_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($custom_whites !== false) {
+            foreach ($custom_whites as $white) {
+                if (strpos($white, '#') !== 0 && !empty(trim($white))) $custom_whitelist_count++;
+            }
+        }
+    }
+    
+    $custom_rules_enabled = get_option('bot_killer_custom_rules_enabled', 0);
+    $unblock_hours = get_option('bot_killer_unblock_hours', 24);
+    $block_out_of_stock = get_option('bot_killer_block_out_of_stock', 1);
+    $block_browser_integrity = get_option('bot_killer_block_browser_integrity', 1);
+    $block_headless = get_option('bot_killer_block_headless', 1);
+    $block_tor = get_option('bot_killer_block_tor', 1);
+    
+    $block_ips = file_exists($this->custom_block_file) ? file_get_contents($this->custom_block_file) : '';
+    $white_ips = file_exists($this->custom_white_file) ? file_get_contents($this->custom_white_file) : '';
+    $allowed_countries = get_option('bot_killer_allowed_countries', array());
+    
+    // ========== READ LOG WITH LIMIT ==========
+    $log_limit = isset($_GET['log_limit']) ? intval($_GET['log_limit']) : 300;
+    $valid_limits = [300, 600, 1000, 1500, 2000];
+    if (!in_array($log_limit, $valid_limits)) {
+        $log_limit = 300;
+    }
+    
+    $log_entries = [];
+    if (file_exists($this->log_file)) {
+        $log_content = file_get_contents($this->log_file);
+        $lines = explode("\n", trim($log_content));
+        foreach ($lines as $line) {
+            if (empty($line)) continue;
+            $entry = json_decode($line, true);
+            if ($entry && isset($entry['time'])) {
+                $log_entries[] = $entry;
+            }
+        }
+    }
+    $log_entries = array_reverse($log_entries);
+    $log_entries = array_slice($log_entries, 0, $log_limit);
+    $display_count = count($log_entries);
+    // =========================================
+    
+    include BOTKILLER_PLUGIN_DIR . 'includes/views/admin-dashboard.php';
+}
 
     public function maybe_cleanup_expired_blocks() {
         $last_cleanup = get_option('bot_killer_last_cleanup', 0);
@@ -4102,4 +4625,409 @@ if (isset($_POST['save_asn_list']) && check_admin_referer('bot_killer_asn_action
             update_option('bot_killer_last_cleanup', time());
         }
     }
+    
+/**
+ * Check if IP is rotating User-Agent too frequently
+ * Supports both IPv4 and IPv6
+ * @param string $ip
+ * @param string $user_agent
+ * @return bool - true if suspicious (too many rotations)
+ */
+private function check_ua_rotation($ip, $user_agent) {
+    $enabled = get_option('bot_killer_ua_rotation_enabled', 0);
+    $debug = get_option('bot_killer_debug_mode', 0);
+    
+    if (!$enabled) {
+        return false;
+    }
+    
+    if ($this->is_ip_blocked($ip)) {
+        return true;
+    }
+    
+    $limit = get_option('bot_killer_ua_rotation_limit', 2);
+    $window = get_option('bot_killer_ua_rotation_window', 5);
+    
+    $key = 'bot_killer_ua_history_' . md5($ip);
+    $history = get_transient($key);
+    $current_time = time();
+    
+    if ($history === false) {
+        $history = [];
+    }
+    
+    $history = array_filter($history, function($time) use ($current_time, $window) {
+        return ($current_time - $time) < $window;
+    });
+    
+    $ua_hash = md5($user_agent);
+    $history[$ua_hash] = $current_time;
+    $unique_ua_count = count($history);
+    
+    set_transient($key, $history, $window + 60);
+    
+    if ($unique_ua_count > $limit) {
+        $this->log_json($ip, "UA rotation detected - {$unique_ua_count} different UAs in {$window} seconds", 'spoof', 'log-spoof-attempt');
+        if ($debug) {
+            $this->log_json($ip, "DEBUG: UA Rotation - limit: {$limit}, window: {$window}, unique: {$unique_ua_count}", 'system', 'log-default');
+        }
+        return true;
+    }
+    
+    return false;
+}
+
+/**
+ * Check if User-Agent is a mobile browser
+ * @param string $user_agent
+ * @param string $ip
+ * @return bool
+ */
+private function is_mobile_browser($user_agent, $ip = null) {
+    if ($ip === null) {
+        $ip = $this->get_ip();
+    }
+    
+    $mobile_agents = [
+        'Android', 'webOS', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 
+        'Windows Phone', 'Opera Mini', 'Mobile', 'mobile'
+    ];
+    
+    $debug = get_option('bot_killer_debug_mode', 0);
+    $result = false;
+    
+    foreach ($mobile_agents as $agent) {
+        if (stripos($user_agent, $agent) !== false) {
+            $result = true;
+            break;
+        }
+    }
+    
+    if ($debug) {
+        $this->log_json($ip, "DEBUG: is_mobile_browser() = " . ($result ? 'true' : 'false') . " | UA: " . substr($user_agent, 0, 100), 'system', 'log-default');
+    }
+    
+    return $result;
+}
+
+/**
+ * Get or create browser session ID
+ * @return string
+ */
+private function get_browser_session_id() {
+    $session_id = isset($_COOKIE['bot_killer_session']) ? $_COOKIE['bot_killer_session'] : '';
+    
+    if (empty($session_id)) {
+        $session_id = bin2hex(random_bytes(16));
+        setcookie('bot_killer_session', $session_id, time() + 86400, '/', '', false, true);
+    }
+    
+    return $session_id;
+}
+
+/**
+ * Browser integrity check with scoring system - session based with challenge
+ * @param string $ip
+ * @param string $user_agent
+ * @return bool - true if passes, false if should block
+ */
+private function check_browser_integrity_with_score($ip, $user_agent) {
+    $debug = get_option('bot_killer_debug_mode', 0);
+    $is_mobile = $this->is_mobile_browser($user_agent);
+    $session_id = $this->get_browser_session_id();
+    
+    $session_key = 'bot_killer_browser_session_' . md5($session_id);
+    $session = get_transient($session_key);
+    
+    if ($session === false) {
+        setcookie('bot_killer_verify', '1', time() + 7200, '/', '', false, true);
+        
+        if (!$is_mobile) {
+            $missing_cookies_score = 0;
+            
+            if (empty($_COOKIE)) {
+                $missing_cookies_score += 3;
+            }
+            
+            if (!isset($_SERVER['HTTP_REFERER']) || empty($_SERVER['HTTP_REFERER'])) {
+                $missing_cookies_score += 1;
+            }
+            
+            if ($missing_cookies_score >= 3) {
+                $this->log_json($ip, "Bot detected on first request - no cookies, score: {$missing_cookies_score}", 'spoof', 'log-spoof-attempt');
+                if ($debug) {
+                    $this->log_json($ip, "DEBUG: Browser integrity - BLOCK (no cookies)", 'system', 'log-default');
+                }
+                $this->block_ip($ip, "Bot detected on first request - no cookies", null, 'browser_integrity_failed', 'browser_integrity');
+                return false;
+            }
+        }
+        
+        set_transient($session_key, [
+            'stage' => 1,
+            'attempts' => 1,
+            'score' => 0,
+            'time' => time()
+        ], 86400);
+        
+        if ($debug) {
+            $this->log_json($ip, "DEBUG: Browser integrity - FIRST REQUEST (allowed)", 'system', 'log-default');
+        }
+        return true;
+    }
+    
+    $attempts = isset($session['attempts']) ? $session['attempts'] + 1 : 2;
+    $session['attempts'] = $attempts;
+    
+    $score = isset($session['score']) ? $session['score'] : 0;
+    
+    $has_js_cookie = isset($_COOKIE['bot_killer_js']) && $_COOKIE['bot_killer_js'] === '1';
+    if (!$has_js_cookie) {
+        $score += 3;
+        if ($attempts > 3) {
+            $score += ($attempts - 3);
+        }
+    }
+    
+    $has_verify_cookie = isset($_COOKIE['bot_killer_verify']) && $_COOKIE['bot_killer_verify'] === '1';
+    if (!$has_verify_cookie) {
+        $score += 1;
+    }
+    
+    if (!isset($_SERVER['HTTP_REFERER']) || empty($_SERVER['HTTP_REFERER'])) {
+        $score += 1;
+    }
+    
+    $session['score'] = $score;
+    set_transient($session_key, $session, 86400);
+    
+    $pass_threshold = $is_mobile ? 4 : 2;
+    $challenge_threshold = $is_mobile ? 9 : 4;
+    
+    if ($score <= $pass_threshold) {
+        if ($debug) {
+            $this->log_json($ip, "DEBUG: Browser integrity - PASS", 'system', 'log-default');
+        }
+        return true;
+    } elseif ($score <= $challenge_threshold) {
+        $challenge_key = 'bot_killer_challenge_' . md5($session_id);
+        $challenge = get_transient($challenge_key);
+        
+        if ($challenge === false) {
+            set_transient($challenge_key, ['attempts' => 1, 'time' => time()], 300);
+            usleep(2000000);
+            if ($debug) {
+                $this->log_json($ip, "DEBUG: Browser integrity - CHALLENGE", 'system', 'log-default');
+            }
+            return true;
+        } else {
+            if ($debug) {
+                $this->log_json($ip, "DEBUG: Browser integrity - CHALLENGE FAILED", 'system', 'log-default');
+            }
+            $this->log_json($ip, "Browser integrity check failed - challenge failed", 'browser_failed', 'log-browser-failed');
+            return false;
+        }
+    } else {
+        if ($debug) {
+            $this->log_json($ip, "DEBUG: Browser integrity - BLOCK (score: {$score})", 'system', 'log-default');
+        }
+        $this->log_json($ip, "Browser integrity check failed - score: {$score}", 'browser_failed', 'log-browser-failed');
+        return false;
+    }
+}
+
+/**
+ * Start session safely if not already started
+ * Only starts session when headers haven't been sent
+ */
+private function maybe_start_session() {
+    if (headers_sent()) {
+        return false;
+    }
+    
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    return true;
+}
+
+/**
+ * Safe API request with error handling
+ * @param string $url
+ * @param array $args
+ * @param string $context
+ * @return array|false Response body or false on error
+ */
+private function safe_api_request($url, $args = array(), $context = 'api') {
+    $defaults = array(
+        'timeout' => 10,
+        'sslverify' => true,
+        'user-agent' => 'Bot Killer WordPress Plugin/' . BOTKILLER_VERSION
+    );
+    
+    $args = wp_parse_args($args, $defaults);
+    
+    $response = wp_remote_get($url, $args);
+    
+    // Check for WP_Error
+    if (is_wp_error($response)) {
+        $error_message = $response->get_error_message();
+        $this->log_json('SYSTEM', "API error [{$context}]: {$error_message}", 'system', 'log-default');
+        
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("Bot Killer API error [{$context}]: {$error_message}");
+        }
+        
+        return false;
+    }
+    
+    $status_code = wp_remote_retrieve_response_code($response);
+    $body = wp_remote_retrieve_body($response);
+    
+    // Check HTTP status
+    if ($status_code !== 200) {
+        $this->log_json('SYSTEM', "API error [{$context}]: HTTP {$status_code}", 'system', 'log-default');
+        
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("Bot Killer API error [{$context}]: HTTP {$status_code} - " . substr($body, 0, 200));
+        }
+        
+        return false;
+    }
+    
+    // Check for empty response
+    if (empty($body)) {
+        $this->log_json('SYSTEM', "API error [{$context}]: Empty response", 'system', 'log-default');
+        return false;
+    }
+    
+    return $body;
+}
+
+private function check_remove_custom_rules($ip, $product_id) {
+    $enabled = get_option('bot_killer_remove_rules_enabled', 0);
+    if (!$enabled) {
+        return true;
+    }
+    
+    $rules_text = get_option('bot_killer_remove_rules', '');
+    if (empty($rules_text)) {
+        return true;
+    }
+    
+    $rules = explode("\n", $rules_text);
+    
+    // Track count for this IP
+    $count_key = 'bot_killer_remove_count_' . md5($ip);
+    $count_data = get_transient($count_key);
+    $current_time = time();
+    
+    // Track unique products
+    $unique_key = 'bot_killer_remove_unique_' . md5($ip);
+    $unique_data = get_transient($unique_key);
+    
+    if ($count_data === false) {
+        $count_data = [
+            'count' => 1,
+            'first_time' => $current_time,
+            'last_time' => $current_time,
+            'products' => [$product_id => $current_time]
+        ];
+    } else {
+        // Clean old products (older than 1 hour)
+        if (isset($count_data['products']) && is_array($count_data['products'])) {
+            $count_data['products'] = array_filter(
+                $count_data['products'],
+                function($time) use ($current_time) {
+                    return ($current_time - $time) < 3600;
+                }
+            );
+        } else {
+            $count_data['products'] = [];
+        }
+        
+        $count_data['products'][$product_id] = $current_time;
+        $count_data['count']++;
+        $count_data['last_time'] = $current_time;
+    }
+    
+    $unique_count = count($count_data['products']);
+    $time_span = $current_time - $count_data['first_time'];
+    $minutes = floor($time_span / 60);
+    $seconds = $time_span % 60;
+    $time_str = $minutes > 0 ? "{$minutes}m {$seconds}s" : "{$seconds}s";
+    
+    set_transient($count_key, $count_data, 3600);
+    set_transient($unique_key, $count_data, 3600);
+    
+    foreach ($rules as $rule) {
+        $rule = trim($rule);
+        if (empty($rule) || strpos($rule, '#') === 0) continue;
+        
+        $parts = explode(',', $rule);
+        $parts = array_map('trim', $parts);
+        
+        if (count($parts) >= 2) {
+            $attempts = intval($parts[0]);
+            $seconds = intval($parts[1]);
+            $type = isset($parts[2]) ? intval($parts[2]) : 2;
+            
+            $matched = false;
+            $actual_count = 0;
+            
+            switch ($type) {
+                case 0: // same product
+                    $same_count = isset($count_data['products'][$product_id]) ? 
+                        count(array_keys($count_data['products'], $product_id)) : 0;
+                    if ($same_count >= $attempts) {
+                        $matched = true;
+                        $actual_count = $same_count;
+                    }
+                    break;
+                case 1: // different products
+                    if ($unique_count >= $attempts) {
+                        $matched = true;
+                        $actual_count = $unique_count;
+                    }
+                    break;
+                case 2: // any removes
+                    if ($count_data['count'] >= $attempts) {
+                        $matched = true;
+                        $actual_count = $count_data['count'];
+                    }
+                    break;
+            }
+            
+            if ($matched && $time_span < $seconds) {
+                $type_text = $type == 0 ? 'same product' : ($type == 1 ? 'different products' : 'any removes');
+                $this->block_ip($ip, sprintf(
+                    "remove rule (%s): %d removes in %ds (actual: %d in %s)",
+                    $type_text,
+                    $attempts,
+                    $seconds,
+                    $actual_count,
+                    $time_str
+                ), null, 'custom_rule_remove_match', 'custom_rule_remove');
+                
+                wc_add_notice(__('Too many cart operations. Please try again later.', 'bot-killer'), 'error');
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
+private function set_default_options() {
+    if (get_option('bot_killer_remove_rules') === false) {
+        $default_rules = "# 5 remove actions in 5 seconds\n5,5,2\n# 3 removes of same product in 10 seconds\n3,10,0\n# 7 removes of different products in 3 seconds\n7,3,1";
+        update_option('bot_killer_remove_rules', $default_rules);
+    }
+    
+    if (get_option('bot_killer_remove_rules_enabled') === false) {
+        update_option('bot_killer_remove_rules_enabled', 0);
+    }
+}
+
 }
