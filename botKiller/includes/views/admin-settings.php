@@ -476,12 +476,12 @@ a.bot-killer-btn.bot-killer-btn:active {
                     <div style="background: #f0f9f0; padding: 10px 15px; border-radius: 8px; flex: 1;">
                         <div style="font-size: 13px; font-weight: 600; color: #4285f4; margin-bottom: 5px;">Google</div>
                         <span style="font-size: 20px; font-weight: bold; color: #7fb65c;"><?php echo number_format($google_count); ?></span>
-                        <span style="font-size: 11px; color: #5f6368; margin-left: 5px;">IP ranges</span>
+                        <span style="font-size: 11px; color: #5f6368; margin-left: 5px;"><?php _e('IP ranges', 'bot-killer'); ?></span>
                     </div>
                     <div style="background: #f0f9f0; padding: 10px 15px; border-radius: 8px; flex: 1;">
                         <div style="font-size: 13px; font-weight: 600; color: #8e44ad; margin-bottom: 5px;">Bing</div>
                         <span style="font-size: 20px; font-weight: bold; color: #7fb65c;"><?php echo number_format($bing_count); ?></span>
-                        <span style="font-size: 11px; color: #5f6368; margin-left: 5px;">IP ranges</span>
+                        <span style="font-size: 11px; color: #5f6368; margin-left: 5px;"><?php _e('IP ranges', 'bot-killer'); ?></span>
                     </div>
                     <div style="background: #f0f9f0; padding: 10px 15px; border-radius: 8px; flex: 1;">
                         <div style="font-size: 13px; font-weight: 600; color: #f6821f; margin-bottom: 5px;">Cloudflare</div>
@@ -567,55 +567,7 @@ a.bot-killer-btn.bot-killer-btn:active {
                 </div>
             </div>
         </div>
-        <!-- Browser Integrity & Out of Stock Blocker Card -->
-<div class="bot-killer-card">
-    <!-- Browser Integrity Section -->
-    <h2 style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-    <span style="color: #7fb65c;"><?php _e('Browser Integrity', 'bot-killer'); ?></span>
-    <span style="color: #ccc;">|</span>
-    <span style="color: #4285f4;"><?php _e('Out of Stock Blocker', 'bot-killer'); ?></span>
-    </h2>
-    <div class="card-content" style="padding: 0;">
-        <div class="bot-killer-rule-row">
-            <span class="bot-killer-rule-title"><?php _e('Block missing JS/cookies/referer', 'bot-killer'); ?></span>
-            <label class="bot-killer-toggle pastel-green">
-                <input type="checkbox" name="bot_killer_block_browser_integrity" value="1" <?php checked($block_browser_integrity, 1); ?>>
-                <span class="bot-killer-toggle-slider"></span>
-            </label>
-        </div>
-        
-        <div class="bot-killer-rule-row" style="border-top: 1px dashed #e0e0e0;">
-            <span class="bot-killer-rule-title"><?php _e('Block headless browsers', 'bot-killer'); ?></span>
-            <label class="bot-killer-toggle pastel-green">
-                <input type="checkbox" name="bot_killer_block_headless" value="1" <?php checked($block_headless, 1); ?>>
-                <span class="bot-killer-toggle-slider"></span>
-            </label>
-        </div>
-        
-        <p class="bot-killer-help-text" style="margin-top: 10px; margin-bottom: 30px;">
-            <?php _e('Blocks bots missing JavaScript, cookies, or referer headers.', 'bot-killer'); ?>
-        </p>
-    </div>
 
-    <!-- Divider -->
-    <div style="height: 1px; background: #f0f0f1; margin: 15px 0;"></div>
-
-    <!-- Out of Stock Blocker Section -->
-    <div class="card-content" style="padding: 0;">
-        <div class="bot-killer-rule-row">
-            <span class="bot-killer-rule-title"><?php _e('Block out of stock attempts', 'bot-killer'); ?></span>
-            <label class="bot-killer-toggle pastel-blue">
-                <input type="checkbox" name="bot_killer_block_out_of_stock" value="1" <?php checked($block_out_of_stock, 1); ?>>
-                <span class="bot-killer-toggle-slider"></span>
-            </label>
-        </div>
-        
-        <p class="bot-killer-help-text" style="margin-top: 10px;">
-            <?php _e('When a visitor tries to add an out-of-stock product to cart, their IP is immediately blocked.', 'bot-killer'); ?>
-        </p>
-    </div>
-</div>
-        
     </div>
 
     <!-- Country Blocking & GeoIP Configuration -->
@@ -701,103 +653,57 @@ a.bot-killer-btn.bot-killer-btn:active {
             </div>
         </div>
     
-        <!-- GeoIP Configuration Card -->
-        <div class="bot-killer-card">
-            <h2 style="color: #64748b;"><?php _e('GeoIP Service', 'bot-killer'); ?></h2>
-            <div class="card-content">
-                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                    <div style="background: #f0f4f8; padding: 10px 15px; border-radius: 8px; flex: 1;">
-                        <div style="font-size: 13px; color: #5f6368;"><?php _e('Cache Duration', 'bot-killer'); ?></div>
-                        <div style="font-size: 20px; font-weight: bold; color: #64748b;"><?php echo $geoip_cache_hours; ?>h</div>
-                        <div style="font-size: 11px; color: #5f6368;"><?php _e('cached', 'bot-killer'); ?></div>
-                    </div>
-                </div>
-
-                <div class="bot-killer-rule-row">
-                    <span class="bot-killer-rule-title"><?php _e('Primary Service', 'bot-killer'); ?></span>
-                    <select name="bot_killer_geoip_service" style="width: 140px; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
-                        <option value="freegeoip" <?php selected($geoip_service, 'freegeoip'); ?>>freegeoip.app</option>
-                        <option value="ip-api" <?php selected($geoip_service, 'ip-api'); ?>>ip-api.com</option>
-                    </select>
-                </div>
-                
-                <div class="bot-killer-rule-row">
-                    <span class="bot-killer-rule-title"><?php _e('Cache Duration', 'bot-killer'); ?></span>
-                    <select name="bot_killer_geoip_cache_hours" style="width: 120px; padding: 6px;">
-                        <option value="1" <?php selected($geoip_cache_hours, 1); ?>>1 hour</option>
-                        <option value="6" <?php selected($geoip_cache_hours, 6); ?>>6 hours</option>
-                        <option value="12" <?php selected($geoip_cache_hours, 12); ?>>12 hours</option>
-                        <option value="24" <?php selected($geoip_cache_hours, 24); ?>>24 hours</option>
-                        <option value="168" <?php selected($geoip_cache_hours, 168); ?>>1 week</option>
-                    </select>
-                </div>
-                
-                <p class="bot-killer-help-text" style="margin-top: 18px;">
-                    <?php _e('Geolocation provider, cache time, and fallback settings.', 'bot-killer'); ?>
-                </p>
-                <div style="background: #f9f9f9; padding: 15px; border-radius: 8px;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" name="bot_killer_geoip_fallback" value="1" <?php checked($geoip_fallback, 1); ?>>
-                        <strong><?php _e('Enable fallback', 'bot-killer'); ?></strong>
-                    </label>
-                </div>
-            </div>
-        </div>
- <!-- Custom Rules Card -->
+<!-- GeoIP Configuration Card -->
 <div class="bot-killer-card">
-    <h2 style="color: #f57c00;"><?php _e('Custom Rules', 'bot-killer'); ?></h2>
+    <h2 style="color: #64748b;"><?php _e('GeoIP Service', 'bot-killer'); ?></h2>
     <div class="card-content">
         <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-            <div style="background: #fff3e0; padding: 10px 15px; border-radius: 8px; flex: 1;">
-                <div style="font-size: 13px; color: #5f6368;"><?php _e('Active Rules', 'bot-killer'); ?></div>
-                <div style="font-size: 20px; font-weight: bold; color: #f57c00;" id="custom-rules-count">
-                    <?php 
-                    $custom_count = 0;
-                    if (!empty($custom_rules)) {
-                        $lines = explode("\n", $custom_rules);
-                        foreach ($lines as $line) {
-                            $line = trim($line);
-                            if (!empty($line) && strpos($line, '#') !== 0 && strpos($line, ',') !== false) $custom_count++;
-                        }
-                    }
-                    echo $custom_count;
-                    ?>
-                </div>
+            <div style="background: #f0f4f8; padding: 10px 15px; border-radius: 8px; flex: 1;">
+                <div style="font-size: 13px; color: #5f6368;"><?php _e('Cache Duration', 'bot-killer'); ?></div>
+                <div style="font-size: 20px; font-weight: bold; color: #64748b;"><?php echo $geoip_cache_hours; ?>h</div>
+                <div style="font-size: 11px; color: #5f6368;"><?php _e('cached', 'bot-killer'); ?></div>
             </div>
         </div>
 
         <div class="bot-killer-rule-row">
-            <span class="bot-killer-rule-title"><?php _e('Enable Custom Rules', 'bot-killer'); ?></span>
-            <label class="bot-killer-toggle pastel-orange">
-                <input type="checkbox" name="bot_killer_custom_rules_enabled" value="1" <?php checked($custom_rules_enabled, 1); ?>>
-                <span class="bot-killer-toggle-slider"></span>
-            </label>
+            <span class="bot-killer-rule-title"><?php _e('Primary Service', 'bot-killer'); ?></span>
+            <select name="bot_killer_geoip_service" style="width: 140px; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="freegeoip" <?php selected($geoip_service, 'freegeoip'); ?>>freegeoip.app</option>
+                <option value="ip-api" <?php selected($geoip_service, 'ip-api'); ?>>ip-api.com</option>
+            </select>
         </div>
         
-        <textarea name="bot_killer_custom_rules" rows="6" class="bot-killer-textarea bot-killer-textarea-orange"><?php 
-            echo empty($custom_rules) ? "# 2 same products in 5 seconds\n2,5,0\n\n# 3 same products in 5 minutes\n3,300,0\n\n# 2 different products in 5 seconds\n2,5,1" : esc_textarea($custom_rules);
-        ?></textarea>
-
-        <p class="bot-killer-help-text" style="margin-top: 28px;">
-            <?php _e('Format: attempts,seconds,type (0=same, 1=different, 2=any). Use # for comments.', 'bot-killer'); ?>
-        </p>
+        <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title"><?php _e('Cache Duration', 'bot-killer'); ?></span>
+            <select name="bot_killer_geoip_cache_hours" style="width: 120px; padding: 6px;">
+                <option value="1" <?php selected($geoip_cache_hours, 1); ?>>1 hour</option>
+                <option value="6" <?php selected($geoip_cache_hours, 6); ?>>6 hours</option>
+                <option value="12" <?php selected($geoip_cache_hours, 12); ?>>12 hours</option>
+                <option value="24" <?php selected($geoip_cache_hours, 24); ?>>24 hours</option>
+                <option value="168" <?php selected($geoip_cache_hours, 168); ?>>1 week</option>
+            </select>
+        </div>
         
-        <!-- Save Button at bottom - like other cards -->
-        <div style="margin-top: 1px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #f9f9f9; padding: 12px; border-radius: 6px;">
-            <span style="font-size: 12px; color: #666;">
-                <?php _e('Save your custom rules', 'bot-killer'); ?>
-            </span>
-            <button type="submit" name="save_settings" class="bot-killer-btn bot-killer-btn-orange">
-                <?php _e('Save All Rules', 'bot-killer'); ?>
+        <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title"><?php _e('Clear GeoIP Cache', 'bot-killer'); ?></span>
+            <button type="button" id="clear-geoip-cache-btn" class="bot-killer-btn bot-killer-btn-blue" style="padding: 6px 12px;">
+                <?php _e('Clear Cache', 'bot-killer'); ?>
             </button>
         </div>
-    </div>
-</div>        
         
+        <p class="bot-killer-help-text" style="margin-top: 18px;">
+            <?php _e('Geolocation provider, cache time, and fallback settings.', 'bot-killer'); ?>
+        </p>
+        
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" name="bot_killer_geoip_fallback" value="1" <?php checked($geoip_fallback, 1); ?>>
+                <strong><?php _e('Enable fallback', 'bot-killer'); ?></strong>
+            </label>
+        </div>
     </div>
+</div>
 
-    <!-- Rules Section -->
-    <div class="bot-killer-settings-grid">
     <!-- System Settings Card - GREEN -->
     <div class="bot-killer-card">
         <h2 style="color: #7fb65c; display: flex; align-items: center; gap: 10px;">
@@ -853,28 +759,265 @@ a.bot-killer-btn.bot-killer-btn:active {
                     <span>MB</span>
                 </div>
             </div>
-            
-            <!-- Timezone Row -->
-            <div class="bot-killer-rule-row">
-                <span class="bot-killer-rule-title" style="display: flex; align-items: center; gap: 8px;">
-                    <?php _e('Time zone (GMT)', 'bot-killer'); ?>
-                </span>
-                <select name="bot_killer_timezone" style="width: 140px; padding: 6px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9;">
-                    <?php
-                    $timezones = ['-12:00', '-11:00', '-10:00', '-09:00', '-08:00', '-07:00', '-06:00', '-05:00', '-04:00', '-03:00', '-02:00', '-01:00', '+00:00', '+01:00', '+02:00', '+03:00', '+03:30', '+04:00', '+04:30', '+05:00', '+05:30', '+05:45', '+06:00', '+06:30', '+07:00', '+08:00', '+08:45', '+09:00', '+09:30', '+10:00', '+10:30', '+11:00', '+12:00', '+12:45', '+13:00', '+14:00'];
-                    foreach ($timezones as $tz) {
-                        echo '<option value="' . esc_attr($tz) . '" ' . selected($timezone_offset, $tz, false) . '>GMT' . esc_html($tz) . '</option>';
-                    }
-                    ?>
-                </select>
-            </div>
+
+        <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title" style="display: flex; align-items: center; gap: 8px;">
+                <?php _e('Time zone (GMT)', 'bot-killer'); ?>
+            </span>
+            <select name="bot_killer_timezone" style="width: 140px; padding: 6px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9;">
+                <?php
+                $timezones = ['-12:00', '-11:00', '-10:00', '-09:00', '-08:00', '-07:00', '-06:00', '-05:00', '-04:00', '-03:00', '-02:00', '-01:00', '+00:00', '+01:00', '+02:00', '+03:00', '+03:30', '+04:00', '+04:30', '+05:00', '+05:30', '+05:45', '+06:00', '+06:30', '+07:00', '+08:00', '+08:45', '+09:00', '+09:30', '+10:00', '+10:30', '+11:00', '+12:00', '+12:45', '+13:00', '+14:00'];
+                foreach ($timezones as $tz) {
+                    echo '<option value="' . esc_attr($tz) . '" ' . selected($timezone_offset, $tz, false) . '>GMT' . esc_html($tz) . '</option>';
+                }
+                ?>
+            </select>
+        </div>
             <p class="bot-killer-help-text">
-                <?php _e('Configure auto-unblock time, log rotation, and timezone.', 'bot-killer'); ?>
+                <?php _e('Configure auto-unblock time, log rotation, and timezone. Daylight saving time is handled automatically.', 'bot-killer'); ?>
             </p>
             
         </div>
-    </div> 
+    </div>   
+        
     </div>
+
+<!-- Rules Section -->
+<div class="bot-killer-settings-grid">
+<!-- Browser Integrity & Out of Stock Blocker Card & UA Rotation Detection Card-->
+<div class="bot-killer-card">
+    <h2 style="display: flex; align-items: center; gap: 5px; margin-bottom: 15px;">
+    <span style="color: #7fb65c;"><?php _e('Browser Integrity', 'bot-killer'); ?></span>
+    <span style="color: #ccc;">|</span>
+    <span style="color: #9b59b6;"><?php _e('User-Agent Rotation', 'bot-killer'); ?></span>
+    <span style="color: #ccc;">|</span>
+    <span style="color: #4285f4;"><?php _e('Out of Stock Blocker', 'bot-killer'); ?></span>
+    </h2>
+    <div class="card-content" style="padding: 0;">
+        <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title"><?php _e('Block missing JS/cookies/referer', 'bot-killer'); ?></span>
+            <label class="bot-killer-toggle pastel-green">
+                <input type="checkbox" name="bot_killer_block_browser_integrity" value="1" <?php checked($block_browser_integrity, 1); ?>>
+                <span class="bot-killer-toggle-slider"></span>
+            </label>
+        </div>
+        
+        <div class="bot-killer-rule-row" style="border-top: 1px dashed #e0e0e0;">
+            <span class="bot-killer-rule-title"><?php _e('Block headless browsers', 'bot-killer'); ?></span>
+            <label class="bot-killer-toggle pastel-green">
+                <input type="checkbox" name="bot_killer_block_headless" value="1" <?php checked($block_headless, 1); ?>>
+                <span class="bot-killer-toggle-slider"></span>
+            </label>
+        </div>
+        
+        <p class="bot-killer-help-text" style="margin-top: 10px; margin-bottom: 30px;">
+            <?php _e('Blocks bots missing JavaScript, cookies, or referer headers.', 'bot-killer'); ?>
+        </p>
+    </div>
+
+    <!-- Divider -->
+    <div style="height: 1px; background: #f0f0f1; margin: 15px 0;"></div>
+
+    <div class="card-content" style="padding: 0;">
+            <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title"><?php _e('Enable UA rotation detection', 'bot-killer'); ?></span>
+            <label class="bot-killer-toggle pastel-purple">
+                <input type="checkbox" name="bot_killer_ua_rotation_enabled" value="1" <?php checked(get_option('bot_killer_ua_rotation_enabled', 0), 1); ?>>
+                <span class="bot-killer-toggle-slider"></span>
+            </label>
+        </div>
+        
+        <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title"><?php _e('Max different UAs', 'bot-killer'); ?></span>
+            <div class="bot-killer-input-group">
+                <input type="number" 
+                    name="bot_killer_ua_rotation_limit" 
+                    value="<?php echo esc_attr(get_option('bot_killer_ua_rotation_limit', 2)); ?>" 
+                    min="2" 
+                    max="20" 
+                    style="width: 70px;">
+                <span><?php _e('different UAs', 'bot-killer'); ?></span>
+            </div>
+        </div>
+        
+        <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title"><?php _e('Time window', 'bot-killer'); ?></span>
+            <div class="bot-killer-input-group">
+                <input type="number" 
+                    name="bot_killer_ua_rotation_window" 
+                    value="<?php echo esc_attr(get_option('bot_killer_ua_rotation_window', 5)); ?>" 
+                    min="3" 
+                    max="60" 
+                    style="width: 70px;">
+                <span><?php _e('seconds', 'bot-killer'); ?></span>
+            </div>
+        </div>
+        
+        <p class="bot-killer-help-text" style="margin-top: 10px; margin-bottom: 30px;">
+            <?php _e('Blocks IP if it uses more than X different User-Agents within Y seconds. Helps detect bots that rotate UA to avoid detection.', 'bot-killer'); ?>
+        </p>
+        
+    <div style="margin-top: 10px; color: #666;">
+        <summary style="cursor: pointer; font-weight: 500;"><?php _e('How it works', 'bot-killer'); ?></summary>
+        <div style="margin-top: 10px; padding: 8px; background: #f9f9f9; border-radius: 6px;">
+            <p><?php _e('Detects bots that rotate User-Agent strings to avoid detection.', 'bot-killer'); ?></br>
+            <strong><?php _e('Example:', 'bot-killer'); ?></strong> <?php _e('If an IP uses 3 different User-Agents within 5 seconds → blocked.', 'bot-killer'); ?></p>
+        </div>
+    </div>
+        <!-- Divider -->
+    <div style="height: 1px; background: #f0f0f1; margin: 15px 0;"></div>
+        <!-- Out of Stock Blocker Section -->
+    <div class="card-content" style="padding: 0;">
+        <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title"><?php _e('Block out of stock attempts', 'bot-killer'); ?></span>
+            <label class="bot-killer-toggle pastel-blue">
+                <input type="checkbox" name="bot_killer_block_out_of_stock" value="1" <?php checked($block_out_of_stock, 1); ?>>
+                <span class="bot-killer-toggle-slider"></span>
+            </label>
+        </div>
+        
+        <p class="bot-killer-help-text" style="margin-top: 10px;">
+            <?php _e('When a visitor tries to add an out-of-stock product to cart, their IP is immediately blocked.', 'bot-killer'); ?>
+        </p>
+    </div>
+    
+    </div>
+</div>    
+
+ <!-- Custom Rules Card -->
+<div class="bot-killer-card">
+    <h2 style="color: #f57c00;"><?php _e('Cart Add Rules', 'bot-killer'); ?></h2>
+    <div class="card-content">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+            <div style="background: #fff3e0; padding: 10px 15px; border-radius: 8px; flex: 1;">
+                <div style="font-size: 13px; color: #5f6368;"><?php _e('Active Rules', 'bot-killer'); ?></div>
+                <div style="font-size: 20px; font-weight: bold; color: #f57c00;" id="custom-rules-count">
+                    <?php 
+                    $custom_count = 0;
+                    if (!empty($custom_rules)) {
+                        $lines = explode("\n", $custom_rules);
+                        foreach ($lines as $line) {
+                            $line = trim($line);
+                            if (!empty($line) && strpos($line, '#') !== 0 && strpos($line, ',') !== false) $custom_count++;
+                        }
+                    }
+                    echo $custom_count;
+                    ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title"><?php _e('Enable Cart Add Rules', 'bot-killer'); ?></span>
+            <label class="bot-killer-toggle pastel-orange">
+                <input type="checkbox" name="bot_killer_custom_rules_enabled" value="1" <?php checked($custom_rules_enabled, 1); ?>>
+                <span class="bot-killer-toggle-slider"></span>
+            </label>
+        </div>
+        
+        <textarea name="bot_killer_custom_rules" rows="8" class="bot-killer-textarea bot-killer-textarea-orange"><?php 
+            echo empty($custom_rules) ? "# 2 same products in 5 seconds\n2,5,0\n\n# 3 same products in 5 minutes\n3,300,0\n\n# 2 different products in 5 seconds\n2,5,1" : esc_textarea($custom_rules);
+        ?></textarea>
+
+        <p class="bot-killer-help-text">
+            <?php _e('Format: attempts,seconds,type (0=same product, 1=different products, 2=any adds). Use # for comments.', 'bot-killer'); ?>
+        </p>
+        
+        <div style="margin-top: 10px; font-size: 12px; color: #666;">
+            
+            <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px;">
+                <p><strong><?php _e('Rule examples:', 'bot-killer'); ?></strong></p>
+                <ul style="margin: 5px 0 10px 20px;">
+                    <li><code>2,5,0</code> — <?php _e('Blocks IP after 2 adds of the SAME product within 5 seconds', 'bot-killer'); ?></li>
+                    <li><code>3,300,0</code> — <?php _e('Blocks IP after 3 adds of the SAME product within 5 minutes', 'bot-killer'); ?></li>
+                    <li><code>2,5,1</code> — <?php _e('Blocks IP after 2 adds of DIFFERENT products within 5 seconds', 'bot-killer'); ?></li>
+                    <li><code>5,10,2</code> — <?php _e('Blocks IP after 5 ANY adds within 10 seconds', 'bot-killer'); ?></li>
+                </ul>
+                <p><strong><?php _e('Note:', 'bot-killer'); ?></strong> <?php _e('These rules only apply to non-logged-in users. Blocked IPs are automatically unbanned after the configured time.', 'bot-killer'); ?></p>
+            </div>
+        </div>
+        
+        <div style="margin-top: 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #f9f9f9; padding: 12px; border-radius: 6px;">
+            <span style="font-size: 12px; color: #666;">
+                <?php _e('Blocks IPs that add too many items too quickly', 'bot-killer'); ?>
+            </span>
+            <button type="submit" name="save_settings" class="bot-killer-btn bot-killer-btn-orange">
+                <?php _e('Save All Rules', 'bot-killer'); ?>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Remove Rules Card -->
+<div class="bot-killer-card">
+    <h2 style="color: #d63638;"><?php _e('Cart Remove Rules', 'bot-killer'); ?></h2>
+    <div class="card-content">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+            <div style="background: #fff5f5; padding: 10px 15px; border-radius: 8px; flex: 1;">
+                <div style="font-size: 13px; color: #5f6368;"><?php _e('Active Rules', 'bot-killer'); ?></div>
+                <div style="font-size: 20px; font-weight: bold; color: #d63638;" id="remove-rules-count">
+                    <?php 
+                    $remove_rules_text = get_option('bot_killer_remove_rules', '');
+                    $remove_count = 0;
+                    if (!empty($remove_rules_text)) {
+                        $lines = explode("\n", $remove_rules_text);
+                        foreach ($lines as $line) {
+                            $line = trim($line);
+                            if (!empty($line) && strpos($line, '#') !== 0 && strpos($line, ',') !== false) $remove_count++;
+                        }
+                    }
+                    echo $remove_count;
+                    ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title"><?php _e('Enable Cart Remove Rules', 'bot-killer'); ?></span>
+            <label class="bot-killer-toggle pastel-red">
+                <input type="checkbox" name="bot_killer_remove_rules_enabled" value="1" <?php checked(get_option('bot_killer_remove_rules_enabled', 0), 1); ?>>
+                <span class="bot-killer-toggle-slider"></span>
+            </label>
+        </div>
+        
+        <textarea name="bot_killer_remove_rules" rows="8" class="bot-killer-textarea bot-killer-textarea-red"><?php 
+            $remove_rules = get_option('bot_killer_remove_rules', '');
+            echo empty($remove_rules) ? "# 5 remove actions in 5 seconds\n5,5,2\n\n# 3 removes of same product in 10 seconds\n3,10,0\n\n# 7 removes of different products in 3 seconds\n7,3,1" : esc_textarea($remove_rules);
+        ?></textarea>
+
+        <p class="bot-killer-help-text">
+            <?php _e('Format: attempts,seconds,type (0=same product, 1=different products, 2=any removes). Use # for comments.', 'bot-killer'); ?>
+        </p>
+        
+        <div style="margin-top: 10px; font-size: 12px; color: #666;">
+            
+            <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px;">
+                <p><strong><?php _e('Rule examples:', 'bot-killer'); ?></strong></p>
+                <ul style="margin: 5px 0 10px 20px;">
+                    <li><code>5,5,2</code> — <?php _e('Blocks IP after 5 ANY removes within 5 seconds', 'bot-killer'); ?></li>
+                    <li><code>3,10,0</code> — <?php _e('Blocks IP after 3 removes of the SAME product within 10 seconds', 'bot-killer'); ?></li>
+                    <li><code>7,3,1</code> — <?php _e('Blocks IP after 7 removes of DIFFERENT products within 3 seconds', 'bot-killer'); ?></li>
+                </ul>
+                <p style="margin-top: 35px;"><strong><?php _e('Note:', 'bot-killer'); ?></strong> <?php _e('These rules only apply to non-logged-in users. Blocked IPs are automatically unbanned after the configured time.', 'bot-killer'); ?></p>
+            </div>
+        </div>
+        
+        <div style="margin-top: 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #f9f9f9; padding: 12px; border-radius: 6px;">
+            <span style="font-size: 12px; color: #666;">
+                <?php _e('Blocks IPs that remove too many items too quickly', 'bot-killer'); ?>
+            </span>
+            <button type="submit" name="save_remove_rules" class="bot-killer-btn bot-killer-btn-red">
+                <?php _e('Save All Rules', 'bot-killer'); ?>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+</div>
 
     <!-- Action Buttons -->
     <div class="card-content" style="display: flex; justify-content: flex-end; padding: 20px 0;">
@@ -960,4 +1103,45 @@ window.updateAllBotRanges = function(buttonElement) {
         setTimeout(() => button.textContent = originalText, 2000);
     });
 };
+jQuery(document).ready(function($) {
+    $('#clear-geoip-cache-btn').on('click', function() {
+        var button = $(this);
+        var originalText = button.text();
+        
+        if (!confirm('<?php echo esc_js(__('Clear all GeoIP cache? This will force new geolocation requests for all IPs.', 'bot-killer')); ?>')) {
+            return;
+        }
+        
+        button.text('<?php echo esc_js(__('Clearing...', 'bot-killer')); ?>');
+        button.prop('disabled', true);
+        
+        var data = {
+            action: 'bot_killer_clear_geoip_cache',
+            nonce: '<?php echo wp_create_nonce('bot_killer_ajax'); ?>'
+        };
+        
+        $.post(ajaxurl, data, function(response) {
+            if (response.success) {
+                button.text('✓ ' + originalText);
+                setTimeout(function() {
+                    button.text(originalText);
+                    button.prop('disabled', false);
+                }, 2000);
+            } else {
+                button.text('✗ ' + originalText);
+                button.prop('disabled', false);
+                setTimeout(function() {
+                    button.text(originalText);
+                }, 2000);
+            }
+        }).fail(function() {
+            button.text('✗ ' + originalText);
+            button.prop('disabled', false);
+            setTimeout(function() {
+                button.text(originalText);
+            }, 2000);
+        });
+    });
+});
+
 </script>

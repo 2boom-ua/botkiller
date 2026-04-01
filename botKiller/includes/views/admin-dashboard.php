@@ -212,8 +212,8 @@
         .bot-killer-rule-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 12px 0;
+            gap: 8px;
+            padding: 6px 0;
             border-bottom: 1px solid #f0f0f1;
         }
 
@@ -247,9 +247,9 @@
 
         .bot-killer-priority-box {
             background: #f9f9f9;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
-            margin-top: 15px;
+            margin-top: 10px;
         }
 
         .bot-killer-priority-list {
@@ -264,7 +264,7 @@
         }
 
         .bot-killer-table-container {
-            height: 603px;
+            height: 430px;
             overflow-y: auto !important;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
@@ -347,24 +347,26 @@
     <div class="bot-killer-main-grid">
         <!-- Auto-blocked IPs Card -->
         <div class="bot-killer-card">
-            <div class="bot-killer-card-header">
-                <h2><?php _e('Auto-blocked IPs', 'bot-killer'); ?></h2>
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" class="bot-killer-btn bot-killer-btn-blue" onclick="location.reload();">
-                        <?php _e('Refresh IP List', 'bot-killer'); ?>
-                    </button>
-                    
-                    <form method="post" style="margin: 0; display: inline;">
-                        <?php wp_nonce_field('clear_all'); ?>
-                        <button type="submit" name="clear_all" class="bot-killer-btn bot-killer-btn-red" onclick="return confirm('<?php _e('Remove all auto-blocks? This action cannot be undone.', 'bot-killer'); ?>');">
-                            <?php _e('Unblock All IP', 'bot-killer'); ?>
-                        </button>
-                    </form>
-                </div>
-            </div>
+<div class="bot-killer-card-header">
+    <h2><?php _e('Auto-blocked IPs', 'bot-killer'); ?></h2>
+    <div style="display: flex; gap: 8px;">
+        <button id="export-blocked-ips-btn" class="bot-killer-btn bot-killer-btn-green">
+            <?php _e('Export CSV', 'bot-killer'); ?>
+        </button>
+        <button type="button" class="bot-killer-btn bot-killer-btn-blue" onclick="location.reload();">
+            <?php _e('Refresh IP List', 'bot-killer'); ?>
+        </button>
+        <form method="post" style="margin: 0; display: inline;">
+            <?php wp_nonce_field('clear_all'); ?>
+            <button type="submit" name="clear_all" class="bot-killer-btn bot-killer-btn-red" onclick="return confirm('<?php _e('Remove all auto-blocks? This action cannot be undone.', 'bot-killer'); ?>');">
+                <?php _e('Unblock All IP', 'bot-killer'); ?>
+            </button>
+        </form>
+    </div>
+</div>
 
             <?php if (!empty($blocked_ips)): ?>
-                <div class="bot-killer-table-container" style="margin-bottom: 18px;">
+                <div class="bot-killer-table-container" style="margin-bottom: 36px;">
                     <table class="bot-killer-table">
                         <thead>
                             <tr>
@@ -449,7 +451,7 @@
                             }, $blocked_ips)); ?></strong> <?php _e('permanent', 'bot-killer'); ?></span>
                     </div>
                     <div>
-                        <span><?php _e('Timezone:', 'bot-killer'); ?> GMT<?php echo esc_html($this->timezone_offset); ?></span>
+                        <span><?php _e('Timezone:', 'bot-killer'); ?> GMT<?php echo esc_html($this->timezone_offset); ?> (<?php _e('DST: auto', 'bot-killer'); ?>)</span>
                     </div>
                 </div>
                 
@@ -516,6 +518,28 @@
                     </div>
                     <span class="<?php echo ($asn_count > 0) ? 'green-ok' : 'red-cross'; ?>"></span>
                 </li>
+                
+                <!-- UA Rotation Detection -->
+                <li class="bot-killer-rule-item">
+                    <div class="bot-killer-rule-icon" style="background: #e8f5e9; color: #9b59b6;">🔄</div>
+                    <div class="bot-killer-rule-content">
+                        <div class="bot-killer-rule-title"><?php _e('UA Rotation Detection', 'bot-killer'); ?></div>
+                        <div class="bot-killer-rule-desc">
+                            <?php 
+                            $ua_enabled = get_option('bot_killer_ua_rotation_enabled', 0);
+                            $ua_limit = get_option('bot_killer_ua_rotation_limit', 3);
+                            $ua_window = get_option('bot_killer_ua_rotation_window', 10);
+                            if ($ua_enabled) {
+                                echo sprintf(__('%d different UAs in %d seconds', 'bot-killer'), $ua_limit, $ua_window);
+                            } else {
+                                _e('Disabled', 'bot-killer');
+                            }
+                            ?>
+                        </div>
+                    </div>
+                    <span class="<?php echo $ua_enabled ? 'green-ok' : 'red-cross'; ?>"></span>
+                </li>
+                
                 <!-- Auto-blocked IPs -->
                 <li class="bot-killer-rule-item">
                     <div class="bot-killer-rule-icon" style="background: #e8f5e9; color: #d63638;">🚫</div>
@@ -603,22 +627,22 @@
                     </div>
                     <span class="<?php echo $custom_rules_enabled ? 'green-ok' : 'red-cross'; ?>"></span>
                 </li>
-                
+                <!-- Add-to-Cart Bots (full width) -->
+                <li class="bot-killer-rule-item">
+                    <div class="bot-killer-rule-icon" style="width: 22px; height: 22px; background: #e8f5e9; color: #1976d2; border-radius: 6px; display: flex; align-items: center; justify-content: center;">🛒</div>
+                    <div class="bot-killer-rule-content">
+                        <div class="bot-killer-rule-title"><?php _e('Add-to-Cart Bots', 'bot-killer'); ?></div>
+                        <div class="bot-killer-rule-desc">
+                            <?php _e('Web bots & AI agents'); ?>
+                        </div>
+                    </div>
+                    <span class="green-ok"></span>
+                </li>
                 
             </ul>
         </div>
         
-        <!-- Add-to-Cart Bots (full width) -->
-        <li class="bot-killer-rule-item" style="list-style: none; padding: 8px 0; margin-top: 10px; border-top: 1px solid #f0f0f1;">
-            <div class="bot-killer-rule-icon" style="width: 22px; height: 22px; background: #e8f5e9; color: #1976d2; border-radius: 6px; display: flex; align-items: center; justify-content: center;">🛒</div>
-            <div class="bot-killer-rule-content">
-                <div class="bot-killer-rule-title"><?php _e('Add-to-Cart Bots', 'bot-killer'); ?></div>
-                <div class="bot-killer-rule-desc">
-                    <?php _e('Google, Bing, Facebook, OpenAI, Anthropic, Telegram, Gemini, Perplexity, Baidu, Yandex, DuckDuckGo, LinkedIn, Pinterest, Twitter, Discord, Slack, CCBot, Amazonbot, Applebot, Bytespider, YouBot, Ahrefs, Semrush, MJ12, DotBot, Meta AI, TikTok, Seznam, PetalBot, WhatsApp, Mistral, Grok, DeepSeek, Qwen', 'bot-killer'); ?>
-                </div>
-            </div>
-            <span class="green-ok"></span>
-        </li>
+        
     
         <div class="bot-killer-priority-box">
             <strong style="display: block; margin-bottom: 5px;"><?php _e('Priority Order:', 'bot-killer'); ?></strong>
@@ -627,15 +651,17 @@
                     <li><?php _e('Whitelist', 'bot-killer'); ?></li>
                     <li><?php _e('Custom Blocklist', 'bot-killer'); ?></li>
                     <li><?php _e('Auto-blocked', 'bot-killer'); ?></li>
-                    <li><?php _e('Add-to-Cart Bots', 'bot-killer'); ?></li>
+                    <li><?php _e('UA Rotation', 'bot-killer'); ?></li>
                 </ol>
                 <ol class="bot-killer-priority-list" start="5">
+                    <li><?php _e('Add-to-Cart Bots', 'bot-killer'); ?></li>
                     <li><?php _e('Tor Exit Node', 'bot-killer'); ?></li>
                     <li><?php _e('ASN Block', 'bot-killer'); ?></li>
                     <li><?php _e('Headless Detection', 'bot-killer'); ?></li>
-                    <li><?php _e('Browser Integrity', 'bot-killer'); ?></li>
+                    
                 </ol>
                 <ol class="bot-killer-priority-list" start="9">
+                    <li><?php _e('Browser Integrity', 'bot-killer'); ?></li>
                     <li><?php _e('Country Filter', 'bot-killer'); ?></li>
                     <li><?php _e('Out of Stock', 'bot-killer'); ?></li>
                     <li><?php _e('Custom Rules', 'bot-killer'); ?></li>
@@ -647,16 +673,71 @@
 
     <!-- Live Log Section -->
     <div style="background: #fff; padding: 20px; border-radius: 8px; margin: 10px 0; border: 1px solid #e5e7eb;">
-        <div class="bot-killer-card-header">
-            <h2 style="margin:0; font-size: 18px;"><?php _e('Live Log', 'bot-killer'); ?></h2>
-            <div style="display: flex; gap: 5px;">
-                <button type="button" class="bot-killer-btn bot-killer-btn-blue" onclick="location.reload();"><?php _e('Refresh Log', 'bot-killer'); ?></button>
-                <form method="post" style="margin: 0; display: inline;">
-                    <?php wp_nonce_field('clear_log'); ?>
-                    <button type="submit" name="clear_log" class="bot-killer-btn bot-killer-btn-grey"><?php _e('Empty Log', 'bot-killer'); ?></button>
-                </form>
-            </div>
+<div class="bot-killer-card-header">
+    <h2 style="margin:0; font-size: 18px;"><?php _e('Live Log', 'bot-killer'); ?></h2>
+    <div style="display: flex; gap: 8px; align-items: center;">
+        
+        <!-- Debug Mode Toggle -->
+        <div id="debug-mode-toggle" style="display: flex; align-items: center; gap: 8px; background: #f5f5f5; padding: 4px 12px; border-radius: 20px; margin-right: 8px;">
+            <span style="font-size: 12px; color: #666;"><?php _e('Debug Mode:', 'bot-killer'); ?></span>
+            <label class="bot-killer-toggle" style="width: 40px; height: 20px; margin: 0;">
+                <input type="checkbox" id="debug-mode-checkbox" <?php checked(get_option('bot_killer_debug_mode', 0), 1); ?>>
+                <span class="bot-killer-toggle-slider"></span>
+            </label>
+            <span id="debug-mode-status" style="font-size: 11px; font-weight: 500; <?php echo get_option('bot_killer_debug_mode', 0) ? 'color: #2e7d32;' : 'color: #999;'; ?>">
+                <!--<?php echo get_option('bot_killer_debug_mode', 0) ? 'ON' : 'OFF'; ?>-->
+                <?php echo get_option('bot_killer_debug_mode', 0) ? __('ON', 'bot-killer') : __('OFF', 'bot-killer'); ?>
+            </span>
         </div>
+        
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 12px; color: #666;"><?php _e('Show:', 'bot-killer'); ?></span>
+            <select id="log-limit" style="padding: 2px 6px; border: 1px solid #ddd; border-radius: 4px; min-width: 45px; background: #fff; cursor: pointer;">
+                <option value="300" <?php selected($log_limit, 300); ?>>  300 </option>
+                <option value="600" <?php selected($log_limit, 600); ?>>  600 </option>
+                <option value="1000" <?php selected($log_limit, 1000); ?>> 1000 </option>
+                <option value="1500" <?php selected($log_limit, 1500); ?>> 1500 </option>
+                <option value="2000" <?php selected($log_limit, 2000); ?>> 2000 </option>
+            </select>
+        </div>
+        <button id="export-csv-btn" class="bot-killer-btn bot-killer-btn-green"><?php _e('Export CSV', 'bot-killer'); ?></button>
+        <button type="button" class="bot-killer-btn bot-killer-btn-blue" onclick="location.reload();"><?php _e('Refresh Log', 'bot-killer'); ?></button>
+        <form method="post" style="margin: 0; display: inline;">
+            <?php wp_nonce_field('clear_log'); ?>
+            <button type="submit" name="clear_log" class="bot-killer-btn bot-killer-btn-red"><?php _e('Empty Log', 'bot-killer'); ?></button>
+        </form>
+    </div>
+</div>
+
+<script>
+jQuery(document).ready(function($) {
+    $('#debug-mode-checkbox').on('change', function() {
+        var checkbox = $(this);
+        var enabled = checkbox.is(':checked') ? 1 : 0;
+        var statusSpan = $('#debug-mode-status');
+        
+        checkbox.prop('disabled', true);
+        
+        $.post(ajaxurl, {
+            action: 'bot_killer_toggle_debug_mode',
+            enabled: enabled,
+            nonce: '<?php echo wp_create_nonce('bot_killer_ajax'); ?>'
+        }, function(response) {
+            if (response.success) {
+                //statusSpan.text(enabled ? 'ON' : 'OFF');
+                statusSpan.text(enabled ? '<?php echo esc_js(__('ON', 'bot-killer')); ?>' : '<?php echo esc_js(__('OFF', 'bot-killer')); ?>');
+                statusSpan.css('color', enabled ? '#2e7d32' : '#999');
+            } else {
+                checkbox.prop('checked', !enabled);
+            }
+            checkbox.prop('disabled', false);
+        }).fail(function() {
+            checkbox.prop('checked', !enabled);
+            checkbox.prop('disabled', false);
+        });
+    });
+});
+</script>
 
         <style>
             .log-row {padding: 6px 10px; margin: 1px 0; border-left: 4px solid; font-size: 13px; font-family: monospace; line-height: 1.2; color: #333;}
@@ -678,169 +759,40 @@
             <div style="display: flex; flex-direction: column;">
                 <?php
                 $display_count = 0;
-                foreach ($log_lines as $line) {
-                    if (empty($line) || strpos($line, '---') !== false) continue;
-                    if (strpos($line, '[') === 0) {
-                        $log_class = 'log-row log-default';
-                        
-                        // =============================================
-                        // BLOCK 1: BOTS (all types)
-                        // =============================================
-                        $bot_patterns = [
-                            'GOOGLE', 'BING', 'YANDEX', 'FACEBOOK', 'AHREFS', 'SEMRUSH',
-                            'OPENAI', 'ANTHROPIC', 'TELEGRAM', 'GEMINI', 'PERPLEXITY',
-                            'APPLEBOT', 'CCBOT', 'AMAZONBOT', 'BYTESPIDER', 'YOUBOT',
-                            'SEZNAM', 'PETALBOT', 'TIKTOK', 'META AI', 'DOTBOT', 'MJ12BOT',
-                            'LINKEDIN', 'PINTEREST', 'TWITTER', 'DISCORD', 'SLACK',
-                            'CLOUDFLARE', 'BAIDU', 'DUCKDUCKGO', 'WHATSAPP', 'MICROSOFTPREVIEW',
-                            'MISTRAL', 'GROK', 'DEEPSEEK', 'QWEN'
-                        ];
-                        
-                        $is_bot_log = false;
-                        $is_bot_allowed = false;
-                        $is_spoof = false;
-                        
-                        foreach ($bot_patterns as $bot) {
-                            if (strpos($line, $bot . ' bot detected') !== false || 
-                                strpos($line, $bot . ' verified bot') !== false) {
-                                $is_bot_log = true;
-                                $is_bot_allowed = false;
-                                $is_spoof = false;
-                                break;
-                            }
-                            if (strpos($line, $bot . ' granted') !== false) {  
-                                $is_bot_log = true;
-                                $is_bot_allowed = true;
-                                $is_spoof = false;
-                                break;
-                            }
-                        }                   
-
-                        $rules = [
-                        
-                            // --- BLOCKED (highest priority) ---
-                            'log-row log-blocked' => [
-                                'ip blocked - SPOOF ATTEMPT',
-                                'ip blocked',
-                                'access attempt blocked',
-                                'blocked by custom blocklist',
-                                'blocked - country',
-                                'Tor exit node detected',
-                                'already in auto-block list',
-                            ],
-                        
-                            // --- SPOOF ---
-                            'log-row log-spoof-attempt' => [
-                                'SPOOF ATTEMPT',
-                                'verification FAILED',
-                            ],
-                        
-                            // --- ASN ---
-                            'log-row log-asn-blocked' => [
-                                ['ASN ', 'blocked'], // must contain BOTH
-                            ],
-                        
-                            // --- SECURITY ---
-                            'log-row log-browser-failed' => [
-                                'Browser integrity check failed',
-                            ],
-                        
-                            'log-row log-headless' => [
-                                'Headless browser detected',
-                            ],
-                        
-                            // --- BOTS ---
-                            'log-row log-cart-bot' => [
-                                'bot detected',
-                                'verified bot',
-                            ],
-                        
-                            'log-row log-bot-allowed' => [
-                                ' granted ',
-                            ],
-                        
-                            // --- CART ---
-                            'log-row log-admin-add' => [
-                                ['ADD TO CART - Product ID:', '[ADMIN]'],
-                            ],
-                        
-                            'log-row log-add-to-cart' => [
-                                'ADD TO CART',
-                            ],
-                        
-                            'log-row log-remove-cart' => [
-                                'REMOVE FROM CART',
-                            ],
-                        
-                            'log-row log-purchase' => [
-                                'PURCHASE',
-                            ],
-                        
-                            // --- STOCK ---
-                            'log-row log-out-of-stock' => [
-                                'out-of-stock',
-                                'out of stock',
-                            ],
-                        
-                            // --- ATTEMPTS ---
-                            'log-row log-first-add' => [
-                                'first add',
-                            ],
-                        
-                            'log-row log-attempt' => [
-                                'attempt #',
-                            ],
-                        
-                            // --- ADMIN ---
-                            'log-row log-admin-action' => [
-                                'manually unblocked',
-                                'auto-unblocked',
-                            ],
-                        
-                            'log-row log-custom-rule' => [
-                                'custom rule',
-                            ],
-                        
-                            'log-row log-whitelist' => [
-                                'whitelisted',
-                            ],
-                        ];
-                        
-                        $log_class = 'log-row log-default';
-                        
-                        foreach ($rules as $class => $conditions) {
-                            foreach ($conditions as $condition) {
-                        
-                                // Multiple required matches
-                                if (is_array($condition)) {
-                                    $match = true;
-                        
-                                    foreach ($condition as $part) {
-                                        if (stripos($line, $part) === false) {
-                                            $match = false;
-                                            break;
-                                        }
-                                    }
-                        
-                                    if ($match) {
-                                        $log_class = $class;
-                                        break 2;
-                                    }
-                        
-                                // Single match
-                                } else {
-                                    if (stripos($line, $condition) !== false) {
-                                        $log_class = $class;
-                                        break 2;
-                                    }
-                                }
-                            }
+                foreach ($log_entries as $entry) {
+                    $class = $entry['style'] ?? 'log-default';
+                    $message = $entry['message'] ?? '';
+                    
+                    // Build location string from geo data if available
+                    $location = '';
+                    if (isset($entry['country'])) {
+                        $location = ' [' . $entry['country'];
+                        if (isset($entry['city'])) {
+                            $location .= ' - ' . $entry['city'];
                         }
-
-                        echo '<div class="' . esc_attr($log_class) . '">' . esc_html($line) . '</div>';
-                        $display_count++;
+                        $location .= ']';
                     }
+                    
+                    // Add cloudflare indicator
+                    if (isset($entry['cloudflare']) && $entry['cloudflare']) {
+                        $location .= ' - Cloudflare';
+                    }
+                    
+                    // Add blocklist type
+                    if (isset($entry['blocklist_type'])) {
+                        if ($entry['blocklist_type'] === 'custom') {
+                            $location = ' [custom blocklist]';
+                        } elseif ($entry['blocklist_type'] === 'auto') {
+                            $location = ' [auto-blocked]';
+                        }
+                    }
+                    
+                    $full_message = $message;
+                    
+                    echo '<div class="log-row ' . esc_attr($class) . '">' . esc_html($full_message) . '</div>';
+                    $display_count++;
                 }
+                
                 if ($display_count == 0) {
                     echo '<div class="log-row log-default" style="padding: 40px; text-align: center;">';
                     echo '<span style="font-size: 48px;">📭</span><br>' . __('No log entries yet', 'bot-killer');
@@ -851,7 +803,20 @@
         </div>
         
         <div class="bot-killer-footer" style="background: #f9f9f9; padding: 5px 10px; border-radius: 6px; margin-top: 10px;">
-            <span><?php printf(__('timestamps in GMT%s | total displayed: %d | Geo data: [country code - city]', 'bot-killer'), esc_html($this->timezone_offset), $display_count); ?></span>
+            <span><?php printf(__('timestamps in GMT%s (DST: auto) | total displayed: %d | Geo data: [country code - city]', 'bot-killer'), esc_html($this->timezone_offset), $display_count); ?></span>
         </div>
     </div>
+<script>
+document.getElementById('log-limit').addEventListener('change', function() {
+    window.location.href = '?page=bot-killer&log_limit=' + this.value;
+});
+
+document.getElementById('export-csv-btn').addEventListener('click', function() {
+    window.location.href = '<?php echo admin_url('admin-ajax.php'); ?>?action=bot_killer_export_csv&nonce=<?php echo wp_create_nonce('bot_killer_export_csv'); ?>';
+});
+
+document.getElementById('export-blocked-ips-btn').addEventListener('click', function() {
+    window.location.href = '<?php echo admin_url('admin-ajax.php'); ?>?action=bot_killer_export_blocked_ips&nonce=<?php echo wp_create_nonce('bot_killer_export_ips'); ?>';
+});
+</script>
 </div>
