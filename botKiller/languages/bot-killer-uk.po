@@ -674,3 +674,132 @@ msgstr "УВІМК."
 
 msgid "OFF"
 msgstr "ВИМК."
+
+msgid "Your browser is not fully supported. Please enable JavaScript and cookies."
+msgstr "Ваш браузер підтримується не повністю. Будь ласка, увімкніть JavaScript та cookies."
+
+msgid "Access Denied - Browser integrity check failed"
+msgstr "Доступ заборонено - перевірка браузера не пройдена"
+
+msgid "Access Denied - Your IP has been blocked due to suspicious activity."
+msgstr "Доступ заборонено - вашу IP-адресу заблоковано через підозрілу активність."
+
+msgid "Access Denied - IP Blocked"
+msgstr "Доступ заборонено - IP заблоковано"
+
+msgid "Access Denied - Suspicious activity detected"
+msgstr "Доступ заборонено - виявлено підозрілу активність"
+
+msgid "Access Denied - Anonymizer detected"
+msgstr "Доступ заборонено - виявлено анонімайзер"
+
+msgid "Access Denied - Network blocked"
+msgstr "Доступ заборонено - мережу заблоковано"
+
+msgid "Access Denied - Automated browser detected"
+msgstr "Доступ заборонено - виявлено автоматизований браузер"
+
+msgid "This product is out of stock"
+msgstr "Цей товар відсутній на складі"
+
+msgid "Access Denied - Too many attempts"
+msgstr "Доступ заборонено - занадто багато спроб"
+
+msgid "Purchases are only available from selected countries"
+msgstr "Покупки доступні лише з обраних країн"
+
+msgid "Unable to verify your location"
+msgstr "Неможливо підтвердити ваше місцезнаходження"
+
+msgid "Invalid product"
+msgstr "Невірний товар"
+
+msgid "Too many cart operations. Please try again later."
+msgstr "Занадто багато операцій з кошиком. Будь ласка, спробуйте пізніше."
+
+msgid "ip %s unblocked!"
+msgstr "IP %s розблоковано!"
+
+msgid "all auto-blocked ips unblocked!"
+msgstr "Усі автоматично заблоковані IP розблоковано!"
+
+msgid "log cleared!"
+msgstr "Журнал очищено!"
+
+msgid "Blocklist saved successfully! %d entries stored."
+msgstr "Чорний список збережено! Записів: %d."
+
+msgid "Whitelist saved successfully! %d entries stored."
+msgstr "Білий список збережено! Записів: %d."
+
+msgid "ASN list saved successfully! %d ASNs stored."
+msgstr "Список ASN збережено! ASN: %d."
+
+msgid "IP lists and ASN list saved successfully!"
+msgstr "Списки IP та ASN збережено!"
+
+msgid "Remove rules saved successfully!Remove rules saved successfully!"
+msgstr "Правила видалення збережено!"
+
+msgid "Logging Settings"
+msgstr "Налаштування журналювання"
+
+msgid "Log APP USER"
+msgstr "Логувати APP USER"
+
+msgid "Log AI USER"
+msgstr "Логувати AI USER"
+
+msgid "Log BROWSER USER"
+msgstr "Логувати BROWSER USER"
+
+msgid "Chrome, Safari, Firefox, Edge and other browsers"
+msgstr "Chrome, Safari, Firefox, Edge та інші браузери"
+
+msgid "Log only for specific countries"
+msgstr "Логувати лише певні країни"
+
+msgid "If disabled → logs all BROWSER USER. If enabled → logs only BROWSER USER from countries selected in Country Access Control"
+msgstr "Вимкнено → логує всіх BROWSER USER. Увімкнено → логує лише BROWSER USER з країн, вибраних у фільтрі країн"
+
+msgid "Browser logging TTL"
+msgstr "TTL журналювання браузера"
+
+msgid "How often to log the same IP"
+msgstr "Як часто логувати один і той самий IP"
+
+msgid "Primary Service URL"
+msgstr "URL основної служби"
+
+msgid "Fallback Service URL"
+msgstr "URL резервної служби"
+
+msgid "Use {ip} as placeholder for the IP address. Service must return JSON with country_code or country field."
+msgstr "Використовуйте {ip} як замінник IP-адреси. Служба має повертати JSON з полем country_code або country."
+
+msgid "Geolocation provider URL with {ip} placeholder. Cache time and fallback settings."
+msgstr "URL постачальника геолокації з замінником {ip}. Налаштування кешу та резервного варіанту."
+
+msgid "1 hour"
+msgstr "1 година"
+
+msgid "6 hours"
+msgstr "6 годин"
+
+msgid "12 hours"
+msgstr "12 годин"
+
+msgid "24 hours"
+msgstr "24 години"
+
+msgid "1 week"
+msgstr "1 тиждень"
+
+msgid "Test with 8.8.8.8"
+msgstr "Тест з 8.8.8.8"
+
+msgid "Dashboard"
+msgstr "Панель керування"
+
+msgid "Settings"
+msgstr "Налаштування"

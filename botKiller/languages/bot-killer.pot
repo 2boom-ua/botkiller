@@ -673,3 +673,130 @@ msgstr ""
 
 msgid "OFF"
 msgstr ""
+
+msgid "Your browser is not fully supported. Please enable JavaScript and cookies."
+msgstr ""
+
+msgid "Access Denied - Browser integrity check failed"
+msgstr ""
+
+msgid "Access Denied - Your IP has been blocked due to suspicious activity."
+msgstr ""
+
+msgid "Access Denied - IP Blocked"
+msgstr ""
+
+msgid "Access Denied - Suspicious activity detected"
+msgstr ""
+
+msgid "Access Denied - Anonymizer detected"
+msgstr ""
+
+msgid "Access Denied - Network blocked"
+msgstr ""
+
+msgid "Access Denied - Automated browser detected"
+msgstr ""
+
+msgid "This product is out of stock"
+msgstr ""
+
+msgid "Access Denied - Too many attempts"
+msgstr ""
+
+msgid "Purchases are only available from selected countries"
+msgstr ""
+
+msgid "Unable to verify your location"
+msgstr ""
+
+msgid "Invalid product"
+msgstr "Невірний товар"
+
+msgid "Too many cart operations. Please try again later."
+msgstr ""
+
+msgid "ip %s unblocked!"
+msgstr ""
+
+msgid "all auto-blocked ips unblocked!"
+msgstr ""
+
+msgid "log cleared!"
+msgstr ""
+
+msgid "Blocklist saved successfully! %d entries stored."
+msgstr ""
+
+msgid "Whitelist saved successfully! %d entries stored."
+msgstr ""
+
+msgid "ASN list saved successfully! %d ASNs stored."
+msgstr ""
+
+msgid "IP lists and ASN list saved successfully!"
+msgstr ""
+
+msgid "Remove rules saved successfully!Remove rules saved successfully!"
+msgstr ""
+
+# Logging Settings Card
+msgid "Logging Settings"
+msgstr ""
+
+msgid "Log APP USER"
+msgstr ""
+
+msgid "Log AI USER"
+msgstr ""
+
+msgid "Log BROWSER USER"
+msgstr ""
+
+msgid "Chrome, Safari, Firefox, Edge and other browsers"
+msgstr ""
+
+msgid "Log only for specific countries"
+msgstr ""
+
+msgid "If disabled → logs all BROWSER USER. If enabled → logs only BROWSER USER from countries selected in Country Access Control"
+msgstr ""
+
+msgid "Browser logging TTL"
+msgstr ""
+
+msgid "Primary Service URL"
+msgstr ""
+
+msgid "Fallback Service URL"
+msgstr ""
+
+msgid "Use {ip} as placeholder for the IP address. Service must return JSON with country_code or country field."
+msgstr ""
+
+msgid "Geolocation provider URL with {ip} placeholder. Cache time and fallback settings."
+msgstr ""
+
+msgid "1 hour"
+msgstr ""
+
+msgid "6 hours"
+msgstr ""
+
+msgid "12 hours"
+msgstr ""
+
+msgid "24 hours"
+msgstr ""
+
+msgid "1 week"
+msgstr ""
+
+msgid "Test with 8.8.8.8"
+msgstr ""
+
+msgid "Dashboard"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
