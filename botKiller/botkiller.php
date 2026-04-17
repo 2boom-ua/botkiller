@@ -3,7 +3,7 @@
 * Plugin Name: BOT KILLER
 * Plugin URI: https://github.com/2boom-ua/botkiller/tree/main
 * Description: Advanced bot protection for WooCommerce
-* Version: 3.0.4
+* Version: 3.0.5
 * Author: 2boom
 * Text Domain: bot-killer
 * Domain Path: /languages
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 define('BOTKILLER_PLUGIN_FILE', __FILE__);
 define('BOTKILLER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('BOTKILLER_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('BOTKILLER_VERSION', '3.0.4');
+define('BOTKILLER_VERSION', '3.0.5');
 
 // Check if WooCommerce is active
 if (!in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')))) {
