@@ -567,6 +567,93 @@ a.bot-killer-btn.bot-killer-btn:active {
                 </div>
             </div>
         </div>
+        
+        <!-- Logging Settings Card -->
+<div class="bot-killer-card">
+    <h2 style="color: #64748b;"><?php _e('Logging Settings', 'bot-killer'); ?></h2>
+    <div class="card-content">
+        <!-- Log APP USER -->
+        <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title"><?php _e('Log APP USER', 'bot-killer'); ?></span>
+            <label class="bot-killer-toggle pastel-blue">
+                <input type="checkbox" name="bot_killer_log_app_user" value="1" <?php checked(get_option('bot_killer_log_app_user', 0), 1); ?>>
+                <span class="bot-killer-toggle-slider"></span>
+            </label>
+        </div>
+        <p class="bot-killer-help-text" style="margin-bottom: 15px;">
+            <?php _e('Facebook, Instagram, Telegram, WhatsApp, TikTok, LinkedIn, Viber, WebView', 'bot-killer'); ?>
+        </p>
+        
+        <!-- Log AI USER -->
+        <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title"><?php _e('Log AI USER', 'bot-killer'); ?></span>
+            <label class="bot-killer-toggle pastel-blue">
+                <input type="checkbox" name="bot_killer_log_ai_user" value="1" <?php checked(get_option('bot_killer_log_ai_user', 0), 1); ?>>
+                <span class="bot-killer-toggle-slider"></span>
+            </label>
+        </div>
+        <p class="bot-killer-help-text" style="margin-bottom: 15px;">
+            <?php _e('ChatGPT, Perplexity, Claude, Mistral', 'bot-killer'); ?>
+        </p>
+        
+        <!-- Log BROWSER USER -->
+        <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title"><?php _e('Log BROWSER USER', 'bot-killer'); ?></span>
+            <label class="bot-killer-toggle pastel-blue">
+                <input type="checkbox" name="bot_killer_log_browser_user" id="bot_killer_log_browser_user" value="1" <?php checked(get_option('bot_killer_log_browser_user', 0), 1); ?>>
+                <span class="bot-killer-toggle-slider"></span>
+            </label>
+        </div>
+        <p class="bot-killer-help-text" style="margin-bottom: 15px;">
+            <?php _e('Chrome, Safari, Firefox, Edge and other browsers', 'bot-killer'); ?>
+        </p>
+        
+        <!-- Browser Logging Options (visible only when BROWSER USER is enabled) -->
+        <div id="browser-logging-options" style="<?php echo get_option('bot_killer_log_browser_user', 0) ? '' : 'display:none;'; ?> margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+            
+            <div class="bot-killer-rule-row">
+                <span class="bot-killer-rule-title"><?php _e('Log only for specific countries', 'bot-killer'); ?></span>
+                <label class="bot-killer-toggle pastel-orange">
+                    <input type="checkbox" name="bot_killer_log_browser_limit_country" value="1" <?php checked(get_option('bot_killer_log_browser_limit_country', 0), 1); ?>>
+                    <span class="bot-killer-toggle-slider"></span>
+                </label>
+            </div>
+            <p class="bot-killer-help-text" style="margin-bottom: 15px;">
+                <?php _e('If disabled → logs all BROWSER USER. If enabled → logs only BROWSER USER from countries selected in Country Access Control', 'bot-killer'); ?>
+            </p>
+            
+            <div class="bot-killer-rule-row" style="border-bottom: none;">
+                <span class="bot-killer-rule-title"><?php _e('Browser logging TTL', 'bot-killer'); ?></span>
+                <div class="bot-killer-input-group">
+                    <select name="bot_killer_log_browser_ttl" style="width: 80px; padding: 5px;">
+                        <option value="1" <?php selected(get_option('bot_killer_log_browser_ttl', 4), 1); ?>>1</option>
+                        <option value="2" <?php selected(get_option('bot_killer_log_browser_ttl', 4), 2); ?>>2</option>
+                        <option value="4" <?php selected(get_option('bot_killer_log_browser_ttl', 4), 4); ?>>4</option>
+                        <option value="6" <?php selected(get_option('bot_killer_log_browser_ttl', 4), 6); ?>>6</option>
+                        <option value="12" <?php selected(get_option('bot_killer_log_browser_ttl', 4), 12); ?>>12</option>
+                    </select>
+                    <span><?php _e('hours', 'bot-killer'); ?></span>
+                </div>
+            </div>
+            <p class="bot-killer-help-text" style="margin-top: 10px;">
+                <?php _e('How often to log the same IP', 'bot-killer'); ?>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+jQuery(document).ready(function($) {
+    $('#bot_killer_log_browser_user').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#browser-logging-options').slideDown();
+        } else {
+            $('#browser-logging-options').slideUp();
+        }
+    });
+});
+</script>
+        
 
     </div>
 
@@ -654,6 +741,7 @@ a.bot-killer-btn.bot-killer-btn:active {
         </div>
     
 <!-- GeoIP Configuration Card -->
+<!-- GeoIP Configuration Card -->
 <div class="bot-killer-card">
     <h2 style="color: #64748b;"><?php _e('GeoIP Service', 'bot-killer'); ?></h2>
     <div class="card-content">
@@ -665,25 +753,49 @@ a.bot-killer-btn.bot-killer-btn:active {
             </div>
         </div>
 
+        <!-- Primary Service URL -->
         <div class="bot-killer-rule-row">
-            <span class="bot-killer-rule-title"><?php _e('Primary Service', 'bot-killer'); ?></span>
-            <select name="bot_killer_geoip_service" style="width: 140px; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
-                <option value="freegeoip" <?php selected($geoip_service, 'freegeoip'); ?>>freegeoip.app</option>
-                <option value="ip-api" <?php selected($geoip_service, 'ip-api'); ?>>ip-api.com</option>
-            </select>
+            <span class="bot-killer-rule-title"><?php _e('Primary Service URL', 'bot-killer'); ?></span>
+            <input type="text" name="bot_killer_geoip_primary_url" 
+                   value="<?php echo esc_attr(get_option('bot_killer_geoip_primary_url', 'http://ip-api.com/json/{ip}')); ?>" 
+                   style="width: 300px; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" 
+                   placeholder="http://ip-api.com/json/{ip}">
+        </div>
+        <p class="bot-killer-help-text" style="margin-bottom: 15px;">
+            <?php _e('Use {ip} as placeholder for the IP address. Service must return JSON with country_code or country field.', 'bot-killer'); ?>
+        </p>
+        
+        <!-- Fallback Service URL (visible only when fallback enabled) -->
+        <div class="bot-killer-rule-row" id="fallback-url-row" style="<?php echo $geoip_fallback ? '' : 'display:none;'; ?>">
+            <span class="bot-killer-rule-title"><?php _e('Fallback Service URL', 'bot-killer'); ?></span>
+            <input type="text" name="bot_killer_geoip_fallback_url" 
+                   value="<?php echo esc_attr(get_option('bot_killer_geoip_fallback_url', '')); ?>" 
+                   style="width: 300px; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" 
+                   placeholder="<?php _e('Optional', 'bot-killer'); ?>">
         </div>
         
+        <!-- Cache Duration -->
         <div class="bot-killer-rule-row">
             <span class="bot-killer-rule-title"><?php _e('Cache Duration', 'bot-killer'); ?></span>
             <select name="bot_killer_geoip_cache_hours" style="width: 120px; padding: 6px;">
-                <option value="1" <?php selected($geoip_cache_hours, 1); ?>>1 hour</option>
-                <option value="6" <?php selected($geoip_cache_hours, 6); ?>>6 hours</option>
-                <option value="12" <?php selected($geoip_cache_hours, 12); ?>>12 hours</option>
-                <option value="24" <?php selected($geoip_cache_hours, 24); ?>>24 hours</option>
-                <option value="168" <?php selected($geoip_cache_hours, 168); ?>>1 week</option>
+                <option value="1" <?php selected($geoip_cache_hours, 1); ?>><?php _e('1 hour', 'bot-killer'); ?></option>
+                <option value="6" <?php selected($geoip_cache_hours, 6); ?>><?php _e('6 hours', 'bot-killer'); ?></option>
+                <option value="12" <?php selected($geoip_cache_hours, 12); ?>><?php _e('12 hours', 'bot-killer'); ?></option>
+                <option value="24" <?php selected($geoip_cache_hours, 24); ?>><?php _e('24 hours', 'bot-killer'); ?></option>
+                <option value="168" <?php selected($geoip_cache_hours, 168); ?>><?php _e('1 week', 'bot-killer'); ?></option>
             </select>
         </div>
         
+        <!-- Test GeoIP Button -->
+        <div class="bot-killer-rule-row">
+            <span class="bot-killer-rule-title"><?php _e('Test GeoIP', 'bot-killer'); ?></span>
+            <button type="button" id="test-geoip-btn" class="bot-killer-btn bot-killer-btn-blue" style="padding: 6px 12px;">
+                <?php _e('Test with 8.8.8.8', 'bot-killer'); ?>
+            </button>
+        </div>
+        <div id="geoip-test-result" style="margin-top: 10px; padding: 8px; background: #f9f9f9; border-radius: 4px; font-size: 12px; display: none;"></div>
+        
+        <!-- Clear Cache Button -->
         <div class="bot-killer-rule-row">
             <span class="bot-killer-rule-title"><?php _e('Clear GeoIP Cache', 'bot-killer'); ?></span>
             <button type="button" id="clear-geoip-cache-btn" class="bot-killer-btn bot-killer-btn-blue" style="padding: 6px 12px;">
@@ -692,17 +804,69 @@ a.bot-killer-btn.bot-killer-btn:active {
         </div>
         
         <p class="bot-killer-help-text" style="margin-top: 18px;">
-            <?php _e('Geolocation provider, cache time, and fallback settings.', 'bot-killer'); ?>
+            <?php _e('Geolocation provider URL with {ip} placeholder. Cache time and fallback settings.', 'bot-killer'); ?>
         </p>
         
+        <!-- Enable Fallback Checkbox -->
         <div style="background: #f9f9f9; padding: 15px; border-radius: 8px;">
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                <input type="checkbox" name="bot_killer_geoip_fallback" value="1" <?php checked($geoip_fallback, 1); ?>>
+                <input type="checkbox" name="bot_killer_geoip_fallback" id="bot_killer_geoip_fallback" value="1" <?php checked($geoip_fallback, 1); ?>>
                 <strong><?php _e('Enable fallback', 'bot-killer'); ?></strong>
             </label>
         </div>
     </div>
 </div>
+
+<script>
+jQuery(document).ready(function($) {
+    // Show/hide fallback URL based on checkbox
+    $('#bot_killer_geoip_fallback').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#fallback-url-row').slideDown();
+        } else {
+            $('#fallback-url-row').slideUp();
+        }
+    });
+    
+    // Test GeoIP button
+    $('#test-geoip-btn').on('click', function() {
+        var button = $(this);
+        var resultDiv = $('#geoip-test-result');
+        var primaryUrl = $('input[name="bot_killer_geoip_primary_url"]').val();
+        var fallbackUrl = $('input[name="bot_killer_geoip_fallback_url"]').val();
+        var fallbackEnabled = $('#bot_killer_geoip_fallback').is(':checked');
+        
+        button.text('<?php _e('Testing...', 'bot-killer'); ?>');
+        button.prop('disabled', true);
+        resultDiv.hide();
+        
+        $.post(ajaxurl, {
+            action: 'bot_killer_test_geoip',
+            nonce: '<?php echo wp_create_nonce('bot_killer_ajax'); ?>',
+            primary_url: primaryUrl,
+            fallback_url: fallbackUrl,
+            fallback_enabled: fallbackEnabled ? 1 : 0
+        }, function(response) {
+            if (response.success) {
+                resultDiv.html('<strong><?php _e('Result:', 'bot-killer'); ?></strong><br>' + 
+                    '<?php _e('Primary service:', 'bot-killer'); ?> ' + (response.data.primary_result || '<?php _e('Failed', 'bot-killer'); ?>') + '<br>' +
+                    '<?php _e('Fallback service:', 'bot-killer'); ?> ' + (response.data.fallback_result || '<?php _e('Not used/failed', 'bot-killer'); ?>'));
+                resultDiv.css('background', '#e8f5e9').show();
+            } else {
+                resultDiv.html('<strong><?php _e('Error:', 'bot-killer'); ?></strong> ' + (response.data.message || '<?php _e('Unknown error', 'bot-killer'); ?>'));
+                resultDiv.css('background', '#ffebee').show();
+            }
+            button.text('<?php _e('Test with 8.8.8.8', 'bot-killer'); ?>');
+            button.prop('disabled', false);
+        }).fail(function() {
+            resultDiv.html('<strong><?php _e('Error:', 'bot-killer'); ?></strong> <?php _e('AJAX request failed', 'bot-killer'); ?>');
+            resultDiv.css('background', '#ffebee').show();
+            button.text('<?php _e('Test with 8.8.8.8', 'bot-killer'); ?>');
+            button.prop('disabled', false);
+        });
+    });
+});
+</script>
 
     <!-- System Settings Card - GREEN -->
     <div class="bot-killer-card">
@@ -1028,7 +1192,6 @@ a.bot-killer-btn.bot-killer-btn:active {
     </div>
 </form>
 </div>
-
 <script type="text/javascript">
 window.updateTorNodes = function(buttonElement) {
     if (!confirm('<?php echo esc_js(__('Update Tor exit nodes?', 'bot-killer')); ?>')) return;

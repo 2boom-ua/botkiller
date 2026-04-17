@@ -13,11 +13,11 @@
             background: #fff3e0;
             border-left-color: #ff9800;
         }
-
+        /*
         .log-cart-bot {
             background: #e3f2fd;
             border-left-color: #1976d2;
-        }
+        } */
 
         .bot-killer-stats-grid {
             display: grid;
@@ -677,19 +677,6 @@
     <h2 style="margin:0; font-size: 18px;"><?php _e('Live Log', 'bot-killer'); ?></h2>
     <div style="display: flex; gap: 8px; align-items: center;">
         
-        <!-- Debug Mode Toggle -->
-        <div id="debug-mode-toggle" style="display: flex; align-items: center; gap: 8px; background: #f5f5f5; padding: 4px 12px; border-radius: 20px; margin-right: 8px;">
-            <span style="font-size: 12px; color: #666;"><?php _e('Debug Mode:', 'bot-killer'); ?></span>
-            <label class="bot-killer-toggle" style="width: 40px; height: 20px; margin: 0;">
-                <input type="checkbox" id="debug-mode-checkbox" <?php checked(get_option('bot_killer_debug_mode', 0), 1); ?>>
-                <span class="bot-killer-toggle-slider"></span>
-            </label>
-            <span id="debug-mode-status" style="font-size: 11px; font-weight: 500; <?php echo get_option('bot_killer_debug_mode', 0) ? 'color: #2e7d32;' : 'color: #999;'; ?>">
-                <!--<?php echo get_option('bot_killer_debug_mode', 0) ? 'ON' : 'OFF'; ?>-->
-                <?php echo get_option('bot_killer_debug_mode', 0) ? __('ON', 'bot-killer') : __('OFF', 'bot-killer'); ?>
-            </span>
-        </div>
-        
         <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 12px; color: #666;"><?php _e('Show:', 'bot-killer'); ?></span>
             <select id="log-limit" style="padding: 2px 6px; border: 1px solid #ddd; border-radius: 4px; min-width: 45px; background: #fff; cursor: pointer;">
@@ -709,53 +696,25 @@
     </div>
 </div>
 
-<script>
-jQuery(document).ready(function($) {
-    $('#debug-mode-checkbox').on('change', function() {
-        var checkbox = $(this);
-        var enabled = checkbox.is(':checked') ? 1 : 0;
-        var statusSpan = $('#debug-mode-status');
-        
-        checkbox.prop('disabled', true);
-        
-        $.post(ajaxurl, {
-            action: 'bot_killer_toggle_debug_mode',
-            enabled: enabled,
-            nonce: '<?php echo wp_create_nonce('bot_killer_ajax'); ?>'
-        }, function(response) {
-            if (response.success) {
-                //statusSpan.text(enabled ? 'ON' : 'OFF');
-                statusSpan.text(enabled ? '<?php echo esc_js(__('ON', 'bot-killer')); ?>' : '<?php echo esc_js(__('OFF', 'bot-killer')); ?>');
-                statusSpan.css('color', enabled ? '#2e7d32' : '#999');
-            } else {
-                checkbox.prop('checked', !enabled);
-            }
-            checkbox.prop('disabled', false);
-        }).fail(function() {
-            checkbox.prop('checked', !enabled);
-            checkbox.prop('disabled', false);
-        });
-    });
-});
-</script>
-
         <style>
             .log-row {padding: 6px 10px; margin: 1px 0; border-left: 4px solid; font-size: 13px; font-family: monospace; line-height: 1.2; color: #333;}
             .log-first-add, .log-add-to-cart, .log-admin-add {background: #f1f8e9; border-left-color: #689f38;}
             .log-attempt {background: #fff9c4; border-left-color: #ffc107;}
             .log-blocked, .log-tor-blocked {background:#ffebee; border-left-color:#e53935;}
             .log-whitelist {background: #e1f5fe; border-left-color: #03a9f4;}
-            .log-admin-action {background: #ffd6dc; border-left-color: #c2185b;}
+            .log-admin-action {background: #ffe1e6; border-left-color: #c2185b;}
             .log-custom-rule, .log-spoof-attempt, .log-out-of-stock, .log-browser-failed, .log-headless {background:#fff3e0; border-left-color:#fb8c00;}
             .log-default {background: #f5f5f5; border-left-color: #9e9e9e;}
             .log-cart-bot {background: #e3f2fd; border-left-color: #1976d2;}
+            .log-cart-user {background: #f0f7ff; border-left-color: #64b5f6;}
             .log-purchase, .log-purchase-item, .log-search-engine {background: #c8e6c9; border-left-color: #2e7d32;}
             .log-remove-cart {background: #fff3e0; border-left-color: #ff9800;}
             .log-asn-blocked {background: #fff3e0; border-left-color: #e67e22;}
             .log-bot-allowed {background: #f5fbff; border-left-color: #03a9f4;}
+            .log-rejected {background: #fff0e0; border-left-color: #ffaa66;}
         </style>
         
-        <div style="max-height: 651px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px; background: white;">
+        <div style="max-height: 771px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px; background: white;">
             <div style="display: flex; flex-direction: column;">
                 <?php
                 $display_count = 0;
@@ -806,6 +765,7 @@ jQuery(document).ready(function($) {
             <span><?php printf(__('timestamps in GMT%s (DST: auto) | total displayed: %d | Geo data: [country code - city]', 'bot-killer'), esc_html($this->timezone_offset), $display_count); ?></span>
         </div>
     </div>
+
 <script>
 document.getElementById('log-limit').addEventListener('change', function() {
     window.location.href = '?page=bot-killer&log_limit=' + this.value;
