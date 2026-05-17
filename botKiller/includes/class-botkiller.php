@@ -850,7 +850,10 @@ if ($this->is_multi_bot_ua($user_agent)) {
     return false;
 }
 
-// ChatGPT-User - behavioral only (UA not trusted)
+// =============================================
+// CHATGPT-USER - MONITORING ONLY (NO BLOCKING)
+// Behavioral analysis for AI referral traffic
+// =============================================
 if (stripos($user_agent, 'ChatGPT-User') !== false && 
     stripos($user_agent, 'GPTBot') === false && 
     stripos($user_agent, 'OAI-SearchBot') === false) {
@@ -859,7 +862,7 @@ if (stripos($user_agent, 'ChatGPT-User') !== false &&
     $has_cookies = !empty($_COOKIE);
     $is_post = ($_SERVER['REQUEST_METHOD'] === 'POST');
     
-    // Has JS/cookies → regular user
+    // Verified: has JS proof or cookies
     if ($has_js || $has_cookies) {
         if ($log_ai_user && !get_transient('bot_killer_chatgpt_logged_' . md5($ip))) {
             $this->log_json($ip, "AI USER: ChatGPT-User - verified (JS/cookies)", 'user_detected', 'log-cart-user');
@@ -868,60 +871,48 @@ if (stripos($user_agent, 'ChatGPT-User') !== false &&
         return false;
     }
     
-    // No JS/cookies → scoring
-    $score = 0;
+    // Unverified: scoring (base +2 for no JS/cookies)
+    $score = 2;
     
-    // No JS = +2
-    if (!$has_js && !$has_cookies) {
-        $score += 2;
-    }
-    
-    // POST request = +3 (high risk)
+    // POST without verification = high risk
     if ($is_post) {
         $score += 3;
     }
     
     // Burst detection (3+ requests in 2 seconds)
     $burst_key = 'bot_killer_chatgpt_burst_' . md5($ip);
-    $burst_times = get_transient($burst_key);
-    if ($burst_times === false) {
-        $burst_times = [];
-    }
+    $burst_times = get_transient($burst_key) ?: [];
     $current_time = time();
     $burst_times[] = $current_time;
-    $burst_times = array_filter($burst_times, function($t) use ($current_time) {
-        return ($current_time - $t) <= 2;
-    });
+    $burst_times = array_filter($burst_times, fn($t) => ($current_time - $t) <= 2);
     set_transient($burst_key, $burst_times, 2);
     
     if (count($burst_times) >= 3) {
         $score += 3;
     }
     
-    // Rate limit (60s window)
+    // Rate tracking (60s window)
     $rate_key = 'bot_killer_chatgpt_user_rate_' . md5($ip);
-    $attempts = (int) get_transient($rate_key);
-    $attempts++;
+    $attempts = (int) get_transient($rate_key) + 1;
     set_transient($rate_key, $attempts, 60);
     
-    // Log once per IP per hour for suspicious
-    $log_key = 'bot_killer_chatgpt_suspicious_logged_' . md5($ip);
-    $should_log = !get_transient($log_key);
-    
-    // Decision: reject (not block) for suspicious behavior
+    // HIGH RISK: Log threshold exceeded (still allows - monitoring only)
     if ($score >= 5 || $attempts > 5) {
-        $this->log_json($ip, "CHATGPT-USER rejected - score: {$score}, attempts: {$attempts} in 60s, burst: " . count($burst_times) . " in 2s, POST: " . ($is_post ? 'yes' : 'no'), 'rejected', 'log-rejected');
+        $method_text = $is_post ? 'POST' : 'GET';
+        $this->log_json($ip, "AI USER: ChatGPT-User - FLAGGED HIGH [MONITOR] (score: {$score}, requests: {$attempts}/60s, burst: " . count($burst_times) . "/2s, method: {$method_text})", 'suspicious', 'log-cart-user');
         return false;
     }
     
-    // First 2 requests → preview (no log if low score)
+    // Grace period: low risk first requests (silent)
     if ($attempts <= 2 && $score < 3) {
         return false;
     }
     
-    // Log suspicious only once per hour
-    if ($should_log && $log_ai_user) {
-        $this->log_json($ip, "AI USER: ChatGPT-User - suspicious (score: {$score}, attempts: {$attempts}/5, POST: " . ($is_post ? 'yes' : 'no') . ")", 'suspicious', 'log-cart-user');
+    // MODERATE: Log once per hour
+    $log_key = 'bot_killer_chatgpt_flagged_' . md5($ip);
+    if ($log_ai_user && !get_transient($log_key)) {
+        $method_text = $is_post ? 'POST' : 'GET';
+        $this->log_json($ip, "AI USER: ChatGPT-User - flagged [MONITOR] (score: {$score}, requests: {$attempts}/60s, method: {$method_text})", 'suspicious', 'log-cart-user');
         set_transient($log_key, true, 3600);
     }
     
@@ -1100,37 +1091,45 @@ if (stripos($user_agent, 'Telegram') !== false && stripos($user_agent, 'Telegram
 }
 
     // =============================================
-    // DUCKDUCKGO BOT - STRICT DNS + ASN VERIFICATION
+    // DUCKDUCKGO BOT - DNS+ASN VERIFICATION OR RATE LIMIT
     // =============================================
     if (stripos($user_agent, 'DuckDuckBot') !== false) {
         
-        $dns_valid = false;
+        $is_valid_dns = false;
         $hostname = $this->reverse_dns_lookup($ip, 5);
-        if ($hostname) {
-            if (strpos($hostname, '.duckduckgo.com') !== false ||
-                strpos($hostname, '.search.msn.com') !== false || 
-                strpos($hostname, '.bing.com') !== false) {
-                $forward_ips = $this->forward_dns_lookup($hostname, 5);
-                if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
-                    $dns_valid = true;
-                }
+        if ($hostname && strpos($hostname, '.duckduckgo.com') !== false) {
+            $forward_ips = $this->forward_dns_lookup($hostname, 5);
+            if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
+                $is_valid_dns = true;
             }
         }
         
-        $asn_valid = false;
+        $is_ddg_asn = false;
         $asn_info = $this->get_asn_for_ip($ip);
-        if ($asn_info && isset($asn_info['asn']) && in_array($asn_info['asn'], ['42729', '8075'])) {
-            $asn_valid = true;
+        $asn = $asn_info ? $asn_info['asn'] : null;
+        if ($asn && in_array($asn, ['42729', '8075'])) {
+            $is_ddg_asn = true;
         }
         
-        if ($dns_valid && $asn_valid) {
-            $this->log_json($ip, "DUCKDUCKGO bot - allowed (DNS + ASN verified)", 'bot_detected', 'log-cart-bot');
-            return false;
-        } else {
-            $this->log_json($ip, "DUCKDUCKGO bot - blocked (DNS: " . ($dns_valid ? 'OK' : 'FAIL') . ", ASN: " . ($asn_valid ? 'OK' : 'FAIL') . ")", 'spoof', 'log-spoof-attempt');
-            $this->block_ip($ip, "SPOOF ATTEMPT: DuckDuckBot", 'duckduckgo', 'dns_asn_mismatch', 'spoof_bot');
+        // Real DuckDuckBot
+        if ($is_valid_dns && $is_ddg_asn) {
+            $this->log_json($ip, "DUCKDUCKGO bot - allowed (verified)", 'bot_detected', 'log-cart-bot');
             return false;
         }
+        
+        // Unverified bot (fake UA) - rate limit 3 per minute
+        $rate_key = 'bot_killer_duckduckbot_rate_' . md5($ip);
+        $attempts = (int) get_transient($rate_key);
+        $attempts++;
+        set_transient($rate_key, $attempts, 60);
+        
+        if ($attempts > 3) {
+            $this->log_json($ip, "DUCKDUCKGO bot - rejected (rate limit: {$attempts}/3 per min)", 'rejected', 'log-rejected');
+            return false;
+        }
+        
+        $this->log_json($ip, "UNVERIFIED BOT (fake UA): DuckDuckBot - allowed (attempt {$attempts}/3)", 'suspicious', 'log-cart-user');
+        return false;
     }
 
 
@@ -1241,7 +1240,7 @@ if (stripos($user_agent, 'wv') !== false || stripos($user_agent, 'WebView') !== 
     // Continue to bot detection checks below
 }
     
-// 2. Facebook crawler (must have ASN 32934 or 63293)
+// 2. Facebook crawler
 $is_allowed_multi = $this->is_allowed_multi_bot($user_agent);
 $is_ipv6 = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
 
@@ -1250,11 +1249,13 @@ if ((stripos($user_agent, 'facebookexternalhit') !== false || stripos($user_agen
     $asn_info = $this->get_asn_for_ip($ip);
     $asn = $asn_info ? $asn_info['asn'] : null;
     $asn_text = $asn ? " (ASN: {$asn})" : '';
-
-    $is_mobile = $this->is_mobile_browser($user_agent);
-    $valid_asn = ['32934', '63293'];
     
-    // For IPv6: check both IP ranges and ASN
+    $meta_asn = ['32934', '63293'];
+    $trusted_cloud_asn = ['15169', '396982', '8075']; // Google, Microsoft
+    
+    $is_mobile = $this->is_mobile_browser($user_agent);
+    
+    // For IPv6: check IP ranges first
     if ($is_ipv6) {
         $facebook_ranges = $this->get_facebook_ip_ranges();
         $ip_valid = false;
@@ -1265,31 +1266,49 @@ if ((stripos($user_agent, 'facebookexternalhit') !== false || stripos($user_agen
             }
         }
         
-        // Also check ASN for IPv6
-        $asn_valid = ($asn && in_array($asn, $valid_asn, true));
-        
-        if ($ip_valid || $asn_valid) {
-            $method = $ip_valid ? 'IPv6 range' : 'ASN';
-            $this->log_json($ip, "FACEBOOK crawler - verified ({$method}){$asn_text}", 'bot_detected', 'log-cart-bot');
+        if ($ip_valid) {
+            $this->log_json($ip, "FACEBOOK crawler - verified (IPv6 range)", 'bot_detected', 'log-cart-bot');
             return 'facebook';
-        } else {
-            $this->log_json($ip, "REJECTED - Facebook bot — IPv6 not in Meta ranges and ASN invalid{$asn_text}", 'rejected', 'log-rejected');
-            return false;
         }
     }
     
-    // IPv4: check ASN
-    if (!$asn || !in_array($asn, $valid_asn, true)) {
+    // IPv4 and IPv6 fallback: check ASN
+    if ($asn && in_array($asn, $meta_asn, true)) {
+        // VERIFIED: Meta ASN
+        $this->log_json($ip, "FACEBOOK crawler - verified (Meta ASN: {$asn})", 'bot_detected', 'log-cart-bot');
+        return 'facebook';
+    }
+    
+    if ($asn && in_array($asn, $trusted_cloud_asn, true)) {
+        // UNVERIFIED-CLOUD: Google/Microsoft/Azure with correct UA
         if ($is_mobile) {
-            $this->log_json($ip, "Facebook crawler UA on mobile device - allowed{$asn_text}", 'social_browser', 'log-cart-bot');
+            $this->log_json($ip, "Facebook crawler UA on mobile device - allowed{$asn_text}", 'bot_detected', 'log-cart-bot');
             return false;
         }
-        $this->log_json($ip, "REJECTED - Facebook bot — requires Meta IP ranges (AS32934/AS63293){$asn_text}", 'rejected', 'log-rejected');
+        
+        // Rate limit for cloud fetchers
+        $rate_key = 'bot_killer_fb_cloud_rate_' . md5($ip);
+        $attempts = (int) get_transient($rate_key);
+        $attempts++;
+        set_transient($rate_key, $attempts, 60);
+        
+        if ($attempts > 5) {
+            $this->log_json($ip, "Facebook crawler (cloud) - rate limit exceeded ({$attempts}/min){$asn_text}", 'rejected', 'log-rejected');
+            return false;
+        }
+        
+        $this->log_json($ip, "FACEBOOK crawler - unverified cloud fetcher (ASN: {$asn})", 'suspicious', 'log-cart-user');
         return false;
     }
-
-    $this->log_json($ip, "FACEBOOK crawler - verified (ASN 32934/63293){$asn_text}", 'bot_detected', 'log-cart-bot');
-    return 'facebook';
+    
+    // SPOOF: Invalid or unknown ASN
+    if ($is_mobile) {
+        $this->log_json($ip, "Facebook crawler UA on mobile device - allowed{$asn_text}", 'bot_detected', 'log-cart-bot');
+        return false;
+    }
+    
+    $this->log_json($ip, "REJECTED - Facebook bot — requires Meta IP ranges (AS32934/AS63293){$asn_text}", 'rejected', 'log-rejected');
+    return false;
 }
 
 // ========== AMAZONBOT ==========
@@ -3052,19 +3071,15 @@ private function is_ip_blocked($ip) {
     return false;
 }
 
-private function get_product_info($product_id) {
-    if (!function_exists('wc_get_product')) return "SKU: N/A";
-    $product = wc_get_product($product_id);
-    if (!$product) return "SKU: N/A (invalid)";
-    
-    $sku = $product->get_sku();
-    $sku_display = !empty($sku) ? $sku : "N/A";
-    $price = $product->get_price();
-    $price_html = wc_price($price);
-    $price_plain = wp_strip_all_tags($price_html);
-    
-    return "SKU: {$sku_display}, Price: {$price_plain}";
-}
+    private function get_product_info($product_id) {
+        if (!function_exists('wc_get_product')) return "ID: {$product_id}";
+        $product = wc_get_product($product_id);
+        if (!$product) return "ID: {$product_id} (" . __('invalid', 'bot-killer') . ")";
+        $price = $product->get_price();
+        $price_html = wc_price($price);
+        $price_plain = wp_strip_all_tags($price_html);
+        return "ID: {$product_id}, " . __('Price', 'bot-killer') . ": {$price_plain}";
+    }
 
 private function block_ip($ip, $reason, $bot_name = null, $verification_method = null, $block_source = null) {
     if ($this->is_ip_in_custom_blocklist($ip)) {
@@ -3480,8 +3495,7 @@ public function track_and_block($passed, $product_id, $quantity) {
         $admin_suffix = $is_admin ? ' [ADMIN]' : '';
         $mobile_suffix = $is_mobile ? ' [MOBILE]' : '';
         
-        $product_info = $this->get_product_info($product_id);
-        $this->log_json($ip, sprintf("ADD TO CART - %s, Qty: %d%s%s", $product_info, $quantity, $admin_suffix, $mobile_suffix), 'add_to_cart', 'log-add-to-cart');
+        $this->log_json($ip, sprintf("ADD TO CART - Product ID: %d, Qty: %d, Price: %s%s%s", $product_id, $quantity, $product_price, $admin_suffix, $mobile_suffix), 'add_to_cart', 'log-add-to-cart');
         
         return $passed;
     }
@@ -4180,10 +4194,10 @@ public function track_and_block($passed, $product_id, $quantity) {
     $admin_suffix = $is_admin ? ' [ADMIN]' : '';
     $cloudflare_suffix = $is_cloudflare ? ' [CF]' : '';
     $mobile_suffix = $is_mobile ? ' [MOBILE]' : '';
-
+    
+    //$this->log_json($ip, sprintf("ADD TO CART - Product ID: %d, Qty: %d, Price: %s%s%s%s", $product_id, $quantity, $product_price, $admin_suffix, $cloudflare_suffix, $mobile_suffix), 'add_to_cart', 'log-add-to-cart');
     $source = $this->get_referrer_source();
-    $product_info = $this->get_product_info($product_id);
-    $this->log_json($ip, sprintf("ADD TO CART - %s, Qty: %d%s%s%s %s", $product_info, $quantity, $admin_suffix, $cloudflare_suffix, $mobile_suffix, $source), 'add_to_cart', 'log-add-to-cart');
+$this->log_json($ip, sprintf("ADD TO CART - Product ID: %d, Qty: %d, Price: %s%s%s%s %s", $product_id, $quantity, $product_price, $admin_suffix, $cloudflare_suffix, $mobile_suffix, $source), 'add_to_cart', 'log-add-to-cart');
     
     return $passed;
 }
@@ -4313,8 +4327,7 @@ public function track_remove_from_cart($cart_item_key, $cart) {
     $is_mobile = $this->is_mobile_browser($user_agent);
     $mobile_suffix = $is_mobile ? ' [MOBILE]' : '';
     
-    $product_info = $this->get_product_info($product_id);
-    $this->log_json($ip, sprintf("REMOVE FROM CART - %s, Qty: %d%s%s", $product_info, $quantity, $admin_suffix, $mobile_suffix), 'remove_cart', 'log-remove-cart');
+    $this->log_json($ip, sprintf("REMOVE FROM CART - Product ID: %d, Qty: %d, Price: %s%s%s", $product_id, $quantity, $product_price, $admin_suffix, $mobile_suffix), 'remove_cart', 'log-remove-cart');
 }
 
 public function cleanup_expired_blocks() {
