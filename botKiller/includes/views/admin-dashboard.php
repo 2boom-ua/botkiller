@@ -264,7 +264,7 @@
         }
 
         .bot-killer-table-container {
-            height: 430px;
+            height: 485px;
             overflow-y: auto !important;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
@@ -366,7 +366,7 @@
 </div>
 
             <?php if (!empty($blocked_ips)): ?>
-                <div class="bot-killer-table-container" style="margin-bottom: 36px;">
+                <div class="bot-killer-table-container" style="margin-bottom: 5px;">
                     <table class="bot-killer-table">
                         <thead>
                             <tr>
