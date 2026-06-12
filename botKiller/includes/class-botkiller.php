@@ -67,9 +67,14 @@ public function __construct() {
 
     register_deactivation_hook(BOTKILLER_PLUGIN_FILE, array($this, 'deactivate'));
     add_action('wp_ajax_bot_killer_update_search_engines', array($this, 'ajax_update_search_engines'));
+    
     add_action('woocommerce_thankyou', array($this, 'track_order'), 10, 1);
     add_action('woocommerce_order_status_completed', array($this, 'track_order'), 10, 1);
+    add_action('woocommerce_checkout_order_processed', array($this, 'track_order'), 10, 1);
+    
     add_action('woocommerce_cart_item_removed', array($this, 'track_remove_from_cart'), 10, 2);
+    add_action('woocommerce_after_cart_item_quantity_update', array($this, 'track_cart_item_quantity_update'), 10, 3);
+
     add_action('wp_ajax_bot_killer_update_tor_nodes', array($this, 'ajax_update_tor_nodes'));
     add_action('wp_ajax_bot_killer_export_csv', array($this, 'ajax_export_csv'));
     
@@ -86,9 +91,6 @@ public function __construct() {
     
     if (!wp_next_scheduled('bot_killer_cleanup_expired_blocks')) {
         wp_schedule_event(time(), 'hourly', 'bot_killer_cleanup_expired_blocks');
-    }
-    if (!wp_next_scheduled('bot_killer_update_cloudflare_ips')) {
-        wp_schedule_event(time(), 'weekly', 'bot_killer_update_cloudflare_ips');
     }
     
     $this->auto_whitelist_server_ip();
@@ -899,7 +901,9 @@ if (stripos($user_agent, 'ChatGPT-User') !== false &&
     // HIGH RISK: Log threshold exceeded (still allows - monitoring only)
     if ($score >= 5 || $attempts > 5) {
         $method_text = $is_post ? 'POST' : 'GET';
-        $this->log_json($ip, "AI USER: ChatGPT-User - FLAGGED HIGH [MONITOR] (score: {$score}, requests: {$attempts}/60s, burst: " . count($burst_times) . "/2s, method: {$method_text})", 'suspicious', 'log-cart-user');
+        if ($log_ai_user) {
+            $this->log_json($ip, "AI USER: ChatGPT-User - FLAGGED HIGH [MONITOR] (score: {$score}, requests: {$attempts}/60s, burst: " . count($burst_times) . "/2s, method: {$method_text})", 'suspicious', 'log-cart-user');
+        }
         return false;
     }
     
@@ -1911,7 +1915,7 @@ if (isset($bot_data['dns']) && !empty($bot_data['dns'])) {
             
             if (!get_transient($log_key)) {
                 $is_mobile = $this->is_mobile_browser($user_agent);
-                $device_type = $is_mobile ? 'MOBILE' : 'DESKTOP UA';
+                $device_type = $is_mobile ? 'MOBILE UA' : 'DESKTOP UA';
                 //$this->log_json($ip, "{$device_type} BROWSER - detected", 'user_detected', 'log-cart-user');
                 $source = $this->get_referrer_source();
                 $this->log_json($ip, "{$device_type} BROWSER - detected {$source}", 'user_detected', 'log-cart-user');
@@ -3071,15 +3075,19 @@ private function is_ip_blocked($ip) {
     return false;
 }
 
-    private function get_product_info($product_id) {
-        if (!function_exists('wc_get_product')) return "ID: {$product_id}";
-        $product = wc_get_product($product_id);
-        if (!$product) return "ID: {$product_id} (" . __('invalid', 'bot-killer') . ")";
-        $price = $product->get_price();
-        $price_html = wc_price($price);
-        $price_plain = wp_strip_all_tags($price_html);
-        return "ID: {$product_id}, " . __('Price', 'bot-killer') . ": {$price_plain}";
-    }
+private function get_product_info($product_id) {
+    if (!function_exists('wc_get_product')) return "SKU: N/A";
+    $product = wc_get_product($product_id);
+    if (!$product) return "SKU: N/A";
+    
+    $sku = $product->get_sku();
+    $sku_display = !empty($sku) ? $sku : "N/A";
+    $price = $product->get_price();
+    $price_html = wc_price($price);
+    $price_plain = wp_strip_all_tags($price_html);
+    
+    return "SKU: {$sku_display}, Price: {$price_plain}";
+}
 
 private function block_ip($ip, $reason, $bot_name = null, $verification_method = null, $block_source = null) {
     if ($this->is_ip_in_custom_blocklist($ip)) {
@@ -3495,7 +3503,9 @@ public function track_and_block($passed, $product_id, $quantity) {
         $admin_suffix = $is_admin ? ' [ADMIN]' : '';
         $mobile_suffix = $is_mobile ? ' [MOBILE]' : '';
         
-        $this->log_json($ip, sprintf("ADD TO CART - Product ID: %d, Qty: %d, Price: %s%s%s", $product_id, $quantity, $product_price, $admin_suffix, $mobile_suffix), 'add_to_cart', 'log-add-to-cart');
+        //$this->log_json($ip, sprintf("ADD TO CART - Product ID: %d, Qty: %d, Price: %s%s%s", $product_id, $quantity, $product_price, $admin_suffix, $mobile_suffix), 'add_to_cart', 'log-add-to-cart');
+        $product_info = $this->get_product_info($product_id);
+        $this->log_json($ip, sprintf("ADD TO CART - %s, Qty: %d%s%s", $product_info, $quantity, $admin_suffix, $mobile_suffix), 'add_to_cart', 'log-add-to-cart');
         
         return $passed;
     }
@@ -4197,7 +4207,9 @@ public function track_and_block($passed, $product_id, $quantity) {
     
     //$this->log_json($ip, sprintf("ADD TO CART - Product ID: %d, Qty: %d, Price: %s%s%s%s", $product_id, $quantity, $product_price, $admin_suffix, $cloudflare_suffix, $mobile_suffix), 'add_to_cart', 'log-add-to-cart');
     $source = $this->get_referrer_source();
-$this->log_json($ip, sprintf("ADD TO CART - Product ID: %d, Qty: %d, Price: %s%s%s%s %s", $product_id, $quantity, $product_price, $admin_suffix, $cloudflare_suffix, $mobile_suffix, $source), 'add_to_cart', 'log-add-to-cart');
+    //$this->log_json($ip, sprintf("ADD TO CART - Product ID: %d, Qty: %d, Price: %s%s%s%s %s", $product_id, $quantity, $product_price, $admin_suffix, $cloudflare_suffix, $mobile_suffix, $source), 'add_to_cart', 'log-add-to-cart');
+    $product_info = $this->get_product_info($product_id);
+    $this->log_json($ip, sprintf("ADD TO CART - %s, Qty: %d%s%s%s %s", $product_info, $quantity, $admin_suffix, $cloudflare_suffix, $mobile_suffix, $source), 'add_to_cart', 'log-add-to-cart');
     
     return $passed;
 }
@@ -4327,7 +4339,9 @@ public function track_remove_from_cart($cart_item_key, $cart) {
     $is_mobile = $this->is_mobile_browser($user_agent);
     $mobile_suffix = $is_mobile ? ' [MOBILE]' : '';
     
-    $this->log_json($ip, sprintf("REMOVE FROM CART - Product ID: %d, Qty: %d, Price: %s%s%s", $product_id, $quantity, $product_price, $admin_suffix, $mobile_suffix), 'remove_cart', 'log-remove-cart');
+    //$this->log_json($ip, sprintf("REMOVE FROM CART - Product ID: %d, Qty: %d, Price: %s%s%s", $product_id, $quantity, $product_price, $admin_suffix, $mobile_suffix), 'remove_cart', 'log-remove-cart');
+    $product_info = $this->get_product_info($product_id);
+    $this->log_json($ip, sprintf("REMOVE FROM CART - %s, Qty: %d%s%s", $product_info, $quantity, $admin_suffix, $mobile_suffix), 'remove_cart', 'log-remove-cart');
 }
 
 public function cleanup_expired_blocks() {
@@ -4606,7 +4620,7 @@ public function sanitize_custom_rules($value) {
             echo '<div class="notice notice-error"><p>' . __('Bot Killer: Upload directory is not writable. Please check permissions.', 'bot-killer') . '</p></div>';
         }
         
-        echo '<div class="notice notice-info"><p>🔒 ' . __('Bot Killer: IP addresses are logged for security purposes. External API calls are made to ip-api.com (GeoIP) and Cloudflare (IP ranges).', 'bot-killer') . '</p></div>';
+        //echo '<div class="notice notice-info"><p>🔒 ' . __('Bot Killer: IP addresses are logged for security purposes. External API calls are made to ip-api.com (GeoIP) and Cloudflare (IP ranges).', 'bot-killer') . '</p></div>';
     }
 
 public function admin_menu() {
@@ -5167,6 +5181,12 @@ private function get_browser_session_id() {
  * @param string $user_agent
  * @return bool - true if passes, false if should block
  */
+/**
+ * Browser integrity check with scoring system - session based with challenge
+ * @param string $ip
+ * @param string $user_agent
+ * @return string - 'block', 'reject', or true (pass)
+ */
 private function check_browser_integrity_with_score($ip, $user_agent) {
     $is_mobile = $this->is_mobile_browser($user_agent);
     $session_id = $this->get_browser_session_id();
@@ -5253,6 +5273,27 @@ private function check_browser_integrity_with_score($ip, $user_agent) {
     } elseif ($score <= $reject_threshold) {
         // REJECT - log only, no block
         $this->log_json($ip, "Browser integrity check failed - score: {$score} (rejected, not blocked)", 'rejected', 'log-rejected');
+        
+        // Reject rate limiting: 3 rejects in 5 seconds → block
+        $reject_key = 'bot_killer_reject_count_' . md5($ip);
+        $reject_times = get_transient($reject_key);
+        if ($reject_times === false) {
+            $reject_times = [];
+        }
+        $current_time = time();
+        $reject_times[] = $current_time;
+        // Keep only requests from last 5 seconds
+        $reject_times = array_filter($reject_times, function($t) use ($current_time) {
+            return ($current_time - $t) <= 5;
+        });
+        set_transient($reject_key, $reject_times, 5);
+        
+        if (count($reject_times) >= 3) {
+            $this->log_json($ip, "IP BLOCKED - 3 browser integrity rejects in 5 seconds", 'blocked', 'log-blocked');
+            $this->block_ip($ip, "Browser integrity - 3 rejects in 5 seconds", null, 'reject_rate_limit', 'browser_integrity');
+            return 'block';
+        }
+        
         return 'reject';
     } else {
         // BLOCK - score >= block_threshold
@@ -5655,5 +5696,64 @@ private function get_azure_ip_ranges() {
     return $ranges;
 }
 
+public function track_cart_item_quantity_update($cart_item_key, $quantity, $old_quantity) {
+    // Allow AJAX requests (cart updates via frontend)
+    if ((is_admin() && !defined('DOING_AJAX')) || !function_exists('wc_get_product')) {
+        return;
+    }
+    
+    $ip = $this->get_ip();
+    
+    // ========== CHECK CUSTOM BLOCKLIST ==========
+    if ($this->is_ip_in_custom_blocklist($ip)) {
+        $this->log_json($ip, "BLOCKED - IP in custom list", 'blocked', 'log-blocked');
+        return;
+    }
+    
+    // ========== CHECK AUTO-BLOCKED ==========
+    if ($this->is_ip_blocked($ip)) {
+        $this->log_json($ip, "BLOCKED - IP in auto-blocked list", 'blocked', 'log-blocked');
+        return;
+    }
+    
+    // Skip if no change
+    if ($quantity == $old_quantity) {
+        return;
+    }
+    
+    $change = $quantity - $old_quantity;
+    $change_text = $change > 0 ? "increased by {$change}" : "decreased by " . abs($change);
+    
+    // Get cart item from session
+    $cart = WC()->cart->get_cart();
+    if (!isset($cart[$cart_item_key])) {
+        return;
+    }
+    
+    $cart_item = $cart[$cart_item_key];
+    $product_id = $cart_item['product_id'];
+    
+    $product = wc_get_product($product_id);
+    if (!$product) {
+        return;
+    }
+    
+    $product_price = $product->get_price();
+    $product_info = $this->get_product_info($product_id);
+    
+    $is_admin = false;
+    if (is_user_logged_in()) {
+        $user = wp_get_current_user();
+        if (in_array('administrator', $user->roles) || in_array('shop_manager', $user->roles)) {
+            $is_admin = true;
+        }
+    }
+    
+    $admin_suffix = $is_admin ? ' [ADMIN]' : '';
+    $is_mobile = $this->is_mobile_browser($_SERVER['HTTP_USER_AGENT'] ?? '');
+    $mobile_suffix = $is_mobile ? ' [MOBILE]' : '';
+    
+    $this->log_json($ip, sprintf("UPDATE CART QUANTITY - %s, Qty: %d → %d (%s)%s%s", $product_info, $old_quantity, $quantity, $change_text, $admin_suffix, $mobile_suffix), 'update_cart', 'log-remove-cart');
+}
 
 }
