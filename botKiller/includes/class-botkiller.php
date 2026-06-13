@@ -53,6 +53,7 @@ public function __construct() {
     add_action('admin_notices', array($this, 'admin_notices'));
     add_action('admin_init', array($this, 'register_settings'));
     add_action('bot_killer_cleanup_expired_blocks', array($this, 'cleanup_expired_blocks'));
+    add_action('bot_killer_check_false_positive', array($this, 'check_false_positive_blocks'));
     add_action('bot_killer_update_cloudflare_ips', array($this, 'update_cloudflare_ips'));
     add_action('bot_killer_update_bot_ips', array($this, 'update_all_bot_ip_ranges'));
     add_action('wp_ajax_bot_killer_js_detected', array($this, 'handle_js_detection'));
@@ -91,6 +92,10 @@ public function __construct() {
     
     if (!wp_next_scheduled('bot_killer_cleanup_expired_blocks')) {
         wp_schedule_event(time(), 'hourly', 'bot_killer_cleanup_expired_blocks');
+    }
+    
+    if (!wp_next_scheduled('bot_killer_check_false_positive')) {
+        wp_schedule_event(time(), 'hourly', 'bot_killer_check_false_positive');
     }
     
     $this->auto_whitelist_server_ip();
@@ -5754,6 +5759,80 @@ public function track_cart_item_quantity_update($cart_item_key, $quantity, $old_
     $mobile_suffix = $is_mobile ? ' [MOBILE]' : '';
     
     $this->log_json($ip, sprintf("UPDATE CART QUANTITY - %s, Qty: %d → %d (%s)%s%s", $product_info, $old_quantity, $quantity, $change_text, $admin_suffix, $mobile_suffix), 'update_cart', 'log-remove-cart');
+}
+
+public function check_false_positive_blocks() {
+    $this->load_search_engine_ips();
+    $this->load_cloudflare_ips();
+    
+    if (!file_exists($this->block_file)) {
+        return;
+    }
+    
+    $blocked_ips = file($this->block_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($blocked_ips === false || empty($blocked_ips)) {
+        return;
+    }
+    
+    $unblocked_count = 0;
+    
+    foreach ($blocked_ips as $ip) {
+        $ip = trim($ip);
+        if (empty($ip)) continue;
+        
+        $is_legitimate = false;
+        $source = '';
+        
+        if (!empty($this->google_ips)) {
+            foreach ($this->google_ips as $range) {
+                if ($this->ip_in_range($ip, $range)) {
+                    $is_legitimate = true;
+                    $source = 'Google';
+                    break;
+                }
+            }
+        }
+        
+        if (!$is_legitimate && !empty($this->bing_ips)) {
+            foreach ($this->bing_ips as $range) {
+                if ($this->ip_in_range($ip, $range)) {
+                    $is_legitimate = true;
+                    $source = 'Bing';
+                    break;
+                }
+            }
+        }
+        
+        if (!$is_legitimate && !empty($this->cloudflare_ips['v4'])) {
+            foreach ($this->cloudflare_ips['v4'] as $range) {
+                if ($this->ip_in_range($ip, $range)) {
+                    $is_legitimate = true;
+                    $source = 'Cloudflare';
+                    break;
+                }
+            }
+        }
+        
+        if (!$is_legitimate && !empty($this->cloudflare_ips['v6'])) {
+            foreach ($this->cloudflare_ips['v6'] as $range) {
+                if ($this->ip_in_range($ip, $range)) {
+                    $is_legitimate = true;
+                    $source = 'Cloudflare';
+                    break;
+                }
+            }
+        }
+        
+        if ($is_legitimate) {
+            $this->unblock_ip($ip);
+            $this->log_json('SYSTEM', "FALSE POSITIVE DETECTED - IP {$ip} belongs to {$source} ranges, auto-unblocked", 'system', 'log-default');
+            $unblocked_count++;
+        }
+    }
+    
+    if ($unblocked_count > 0) {
+        $this->log_json('SYSTEM', "False positive check completed: {$unblocked_count} IP(s) unblocked", 'system', 'log-default');
+    }
 }
 
 }
