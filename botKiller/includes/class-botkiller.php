@@ -1345,7 +1345,7 @@ if (stripos($user_agent, 'Amazonbot') !== false) {
     $this->log_json($ip, "AMAZONBOT bot - verified (DNS)", 'bot_detected', 'log-cart-bot');
     return 'amazonbot';
 }
-    
+
     // ========== SKIP CART_BOTS FOR ALLOWED MULTI-BOTS ==========
     if ($this->is_allowed_multi_bot($user_agent)) {
         return false;
@@ -1620,15 +1620,15 @@ if (stripos($user_agent, 'Amazonbot') !== false) {
             ],
             'bytespider' => [
                 'agents' => ['Bytespider'],
-                'dns' => [],
+                'dns' => ['.crawl.bytedance.com'],
                 'ip_ranges' => $this->get_bytespider_ip_ranges(),
-                'asn' => ['37963', '45090'],
-                'type' => 'hybrid',
-                'allow_js' => true,
+                'asn' => ['4134', '4808', '4837', '138699', '396986'],
+                'type' => 'strict',
+                'allow_js' => false,
                 'require_verification' => true,
-                'require_dns_only' => false,
+                'require_dns_only' => true,
                 'spoof_risk' => 'high',
-                'description' => 'Bytespider — requires ByteDance IP ranges (ASN optional)'
+                'description' => 'Bytespider — requires DNS .crawl.bytedance.com or ByteDance ASN',
             ],
             'qwen' => [
                 'agents' => ['QwenBot'],
@@ -2457,23 +2457,27 @@ private function get_perplexity_ip_ranges() {
         return $ranges;
     }
 
-    private function get_bytespider_ip_ranges() {
-        $cache_key = 'bot_killer_bytespider_ips';
-        $ranges = get_transient($cache_key);
-        if ($ranges !== false) return $ranges;
-        
-        $ranges = [
-            '47.252.0.0/16', '110.42.0.0/16', '123.126.0.0/16', '140.210.0.0/16',
-            '159.27.0.0/16', '165.225.0.0/16', '182.16.0.0/16', '202.89.0.0/16',
-            '203.107.0.0/16', '210.209.0.0/16', '218.244.0.0/16', '220.181.0.0/16',
-            '35.221.0.0/16', '34.96.0.0/14', '34.120.0.0/16', '45.113.0.0/16',
-            '149.129.0.0/16', '161.117.0.0/16', '170.179.0.0/16', '179.61.0.0/16',
-            '182.176.0.0/16', '198.11.0.0/16', '199.180.0.0/16'
-        ];
-        
-        set_transient($cache_key, $ranges, WEEK_IN_SECONDS);
-        return $ranges;
-    }
+private function get_bytespider_ip_ranges() {
+    $cache_key = 'bot_killer_bytespider_ips';
+    $ranges = get_transient($cache_key);
+    if ($ranges !== false) return $ranges;
+
+    $ranges = [
+        '110.249.201.0/24',
+        '110.249.202.0/24',
+        '111.225.148.0/24',
+        '111.225.149.0/24',
+        '220.243.135.0/24',
+        '220.243.136.0/24',
+        '220.243.188.0/24',
+        '220.243.189.0/24',
+        '60.8.123.0/24',
+        '60.8.151.0/24',
+    ];
+    
+    set_transient($cache_key, $ranges, WEEK_IN_SECONDS);
+    return $ranges;
+}
 
     private function get_youbot_ip_ranges() {
         $cache_key = 'bot_killer_youbot_ips';
@@ -3612,45 +3616,53 @@ public function track_and_block($passed, $product_id, $quantity) {
         $verification_method = 'standard';
     }
     
-    // Method 2: Direct DNS verification for common bots if not detected
-    if (!$cart_bot) {
-        $hostname = $this->reverse_dns_lookup($ip, 2);
-        
-        if ($hostname) {
-            // Yandex check
-            if (strpos($hostname, '.yandex.ru') !== false || strpos($hostname, '.yandex.net') !== false) {
-                $forward_ips = $this->forward_dns_lookup($hostname, 2);
-                if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
-                    $cart_bot = 'yandex';
-                    $verification_method = 'dns_forward';
-                }
+// Method 2: Direct DNS verification for common bots if not detected
+if (!$cart_bot) {
+    $hostname = $this->reverse_dns_lookup($ip, 2);
+    
+    if ($hostname) {
+        // Yandex check
+        if (strpos($hostname, '.yandex.ru') !== false || strpos($hostname, '.yandex.net') !== false) {
+            $forward_ips = $this->forward_dns_lookup($hostname, 2);
+            if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
+                $cart_bot = 'yandex';
+                $verification_method = 'dns_forward';
             }
-            // CCBot check
-            elseif (strpos($hostname, '.crawl.commoncrawl.org') !== false) {
-                $forward_ips = $this->forward_dns_lookup($hostname, 2);
-                if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
-                    $cart_bot = 'ccbot';
-                    $verification_method = 'dns_forward';
-                }
+        }
+        // CCBot check
+        elseif (strpos($hostname, '.crawl.commoncrawl.org') !== false) {
+            $forward_ips = $this->forward_dns_lookup($hostname, 2);
+            if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
+                $cart_bot = 'ccbot';
+                $verification_method = 'dns_forward';
             }
-            // Amazonbot check
-            elseif (strpos($hostname, '.crawl.amazonbot.amazon') !== false) {
-                $forward_ips = $this->forward_dns_lookup($hostname, 2);
-                if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
-                    $cart_bot = 'amazonbot';
-                    $verification_method = 'dns_forward';
-                }
+        }
+        // Amazonbot check
+        elseif (strpos($hostname, '.crawl.amazonbot.amazon') !== false) {
+            $forward_ips = $this->forward_dns_lookup($hostname, 2);
+            if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
+                $cart_bot = 'amazonbot';
+                $verification_method = 'dns_forward';
             }
-            // Applebot check
-            elseif (strpos($hostname, '.applebot.apple.com') !== false) {
-                $forward_ips = $this->forward_dns_lookup($hostname, 2);
-                if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
-                    $cart_bot = 'applebot';
-                    $verification_method = 'dns_forward';
-                }
+        }
+        // Applebot check
+        elseif (strpos($hostname, '.applebot.apple.com') !== false) {
+            $forward_ips = $this->forward_dns_lookup($hostname, 2);
+            if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
+                $cart_bot = 'applebot';
+                $verification_method = 'dns_forward';
+            }
+        }
+        // Bytespider check 
+        elseif (strpos($hostname, '.crawl.bytedance.com') !== false) {
+            $forward_ips = $this->forward_dns_lookup($hostname, 2);
+            if ($forward_ips && is_array($forward_ips) && in_array($ip, $forward_ips)) {
+                $cart_bot = 'bytespider';
+                $verification_method = 'dns_forward';
             }
         }
     }
+}
     
     // Method 3: IP range verification for bots without DNS
     if (!$cart_bot) {
